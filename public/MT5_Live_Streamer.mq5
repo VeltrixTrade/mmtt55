@@ -8,16 +8,18 @@
 #property description "Streams real-time M5 (900 candles) and M15 (300 candles) data to Local Bridge Server"
 
 // Input Parameters
-input string   InpServerUrl = "http://127.0.0.1:8080/api/mt5-data"; // Local Server URL
+input string   InpServerUrl = "http://127.0.0.1:8080/api/mt5-data"; // Local or Railway Server URL
 input int      InpM5History  = 900;                                   // M5 Candle History Count
 input int      InpM15History = 300;                                   // M15 Candle History Count
 
 // Global State Trackers
-datetime g_lastM5Time  = 0;
-datetime g_lastM15Time = 0;
-double   g_lastBid     = 0;
-double   g_lastAsk     = 0;
-double   g_lastM5Close = 0;
+datetime g_lastM5Time   = 0;
+datetime g_lastM15Time  = 0;
+double   g_lastBid      = 0;
+double   g_lastAsk      = 0;
+double   g_lastM5Close  = 0;
+bool     g_initialSent  = false;
+datetime g_lastRetryTime = 0;
 
 //+------------------------------------------------------------------+
 //| Helper: Format MqlRates struct into JSON string                  |
@@ -39,7 +41,7 @@ string RateToJson(const MqlRates &rate)
 //+------------------------------------------------------------------+
 //| Helper: Send JSON Payload via WebRequest HTTP POST                |
 //+------------------------------------------------------------------+
-bool SendJsonPayload(string json)
+bool SendJsonPayload(string json, int timeoutMs = 12000)
 {
    char postData[];
    char resultData[];
@@ -53,7 +55,7 @@ bool SendJsonPayload(string json)
    ArrayResize(postData, len);
    
    ResetLastError();
-   int res = WebRequest("POST", InpServerUrl, headers, 1000, postData, resultData, responseHeaders);
+   int res = WebRequest("POST", InpServerUrl, headers, timeoutMs, postData, resultData, responseHeaders);
    
    if (res == -1)
    {
@@ -70,7 +72,7 @@ bool SendJsonPayload(string json)
 //+------------------------------------------------------------------+
 //| Helper: Send Initial 900 M5 & 300 M15 Candles                    |
 //+------------------------------------------------------------------+
-void SendInitialData()
+bool SendInitialData()
 {
    MqlRates ratesM5[];
    MqlRates ratesM15[];
@@ -83,8 +85,8 @@ void SendInitialData()
    
    if (countM5 <= 0 || countM15 <= 0)
    {
-      Print("WARNING: Waiting for price data history to load...");
-      return;
+      Print("WARNING: Waiting for price data history to load from broker...");
+      return false;
    }
    
    MqlTick lastTick;
@@ -109,7 +111,7 @@ void SendInitialData()
    string json = StringFormat("{\"action\":\"initial\",\"symbol\":\"%s\",\"currentBid\":%.3f,\"currentAsk\":%.3f,\"candlesM5\":%s,\"candlesM15\":%s}",
                               _Symbol, lastTick.bid, lastTick.ask, jsonM5, jsonM15);
    
-   if (SendJsonPayload(json))
+   if (SendJsonPayload(json, 12000))
    {
       Print("✅ Initial Data Sent Successfully: ", countM5, " M5 candles & ", countM15, " M15 candles.");
       g_lastM5Time  = ratesM5[countM5 - 1].time;
@@ -117,7 +119,11 @@ void SendInitialData()
       g_lastBid     = lastTick.bid;
       g_lastAsk     = lastTick.ask;
       g_lastM5Close = ratesM5[countM5 - 1].close;
+      g_initialSent = true;
+      return true;
    }
+   Print("⚠️ Initial payload send failed. Will retry automatically...");
+   return false;
 }
 
 //+------------------------------------------------------------------+
@@ -149,6 +155,19 @@ void OnDeinit(const int reason)
 //+------------------------------------------------------------------+
 void OnTimer()
 {
+   // Retry initial snapshot if not confirmed yet
+   if (!g_initialSent)
+   {
+      datetime now = TimeCurrent();
+      if (now - g_lastRetryTime >= 3)
+      {
+         g_lastRetryTime = now;
+         Print("🔄 Attempting to send initial 900 M5 & 300 M15 snapshot...");
+         SendInitialData();
+      }
+      return;
+   }
+
    MqlTick tick;
    if (!SymbolInfoTick(_Symbol, tick)) return;
    

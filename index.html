@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Lato:wght@400;700&family=Montserrat:wght@400;500;700&family=Open+Sans:wght@400;600&family=Outfit:wght@400;500;700&family=Poppins:wght@400;500;600&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="styles.css?v=63">
+    <link rel="stylesheet" href="styles.css?v=64">
 </head>
 <body>
     <div class="iphone-frame">
@@ -31,12 +31,6 @@
                 
                 <!-- Timeframe Overlay (for M15) -->
                 <img src="M15.jpg" id="header-tf-overlay" class="hidden" alt="M15">
-                
-                <!-- Live Connection Status Badge -->
-                <div id="connection-status-badge" style="position: absolute; right: 12px; top: 12px; font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 10px; z-index: 50; display: flex; align-items: center; gap: 4px; pointer-events: none; background: rgba(0,0,0,0.55); color: #e5e5e7; backdrop-filter: blur(4px);">
-                    <span id="conn-dot" style="width: 6px; height: 6px; border-radius: 50%; background-color: #ff3b30; display: inline-block;"></span>
-                    <span id="conn-text">Disconnected</span>
-                </div>
                 
 
                 <!-- Transparent click zones mapped over the image buttons -->
@@ -241,7 +235,13 @@
 
                 <!-- Trade Page (Hidden by default) -->
                 <div class="page hidden" id="page-trade">
-                    <div class="page-header">تداول (Trade)</div>
+                    <div class="page-header" style="position: relative; display: flex; align-items: center; justify-content: space-between; padding: 0 16px;">
+                        <span>تداول (Trade)</span>
+                        <div id="connection-status-badge" style="font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 10px; display: flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.55); color: #e5e5e7; backdrop-filter: blur(4px);">
+                            <span id="conn-dot" style="width: 6px; height: 6px; border-radius: 50%; background-color: #ff3b30; display: inline-block;"></span>
+                            <span id="conn-text">Disconnected</span>
+                        </div>
+                    </div>
                     <div class="page-scrollable">
                         <div class="balance-card">
                             <div class="balance-row">
@@ -794,6 +794,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=63"></script>
+    <script src="app.js?v=64"></script>
 </body>
 </html>

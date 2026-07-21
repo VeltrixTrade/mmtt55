@@ -3843,8 +3843,8 @@ function finalizeInit() {
     updateTradingPanelUI();
     updatePositionsProfit();
     
-    // Force clean old service worker cache on first load of version 63
-    if (!localStorage.getItem('sw_migrated_v63')) {
+    // Force clean old service worker cache on first load of version 64
+    if (!localStorage.getItem('sw_migrated_v64')) {
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(registrations => {
                 for (let registration of registrations) {
@@ -3857,7 +3857,7 @@ function finalizeInit() {
                 for (let name of names) caches.delete(name);
             });
         }
-        localStorage.setItem('sw_migrated_v63', 'true');
+        localStorage.setItem('sw_migrated_v64', 'true');
         setTimeout(() => {
             window.location.reload(true); // Force reload to fetch everything fresh
         }, 200);
@@ -3866,7 +3866,7 @@ function finalizeInit() {
 
     // Register PWA Service Worker
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js?v=63')
+        navigator.serviceWorker.register('./sw.js?v=64')
             .then(() => console.log('PWA Service Worker Registered'))
             .catch(err => console.log('Service Worker Registration Failed:', err));
     }
@@ -4042,9 +4042,11 @@ function handleWebSocketMessage(data) {
         
         if (Array.isArray(data.candlesM5) && data.candlesM5.length > 0) {
             State.candlesM5 = data.candlesM5.map(parseWSCandle).filter(Boolean);
+            State.candlesM5.sort((a, b) => a.time.getTime() - b.time.getTime());
         }
         if (Array.isArray(data.candlesM15) && data.candlesM15.length > 0) {
             State.candlesM15 = data.candlesM15.map(parseWSCandle).filter(Boolean);
+            State.candlesM15.sort((a, b) => a.time.getTime() - b.time.getTime());
         }
         
         if (data.currentBid) State.currentBid = data.currentBid;
