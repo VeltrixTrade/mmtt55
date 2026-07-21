@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>MT5 Chart Simulator - XAUUSDr M5</title>
+    
+    <!-- PWA & Standalone App Configuration -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="مبت تريدر 5">
+    <link rel="apple-touch-icon" href="public/icon-192.png">
+    
+    <!-- Google Fonts for premium typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Lato:wght@400;700&family=Montserrat:wght@400;500;700&family=Open+Sans:wght@400;600&family=Outfit:wght@400;500;700&family=Poppins:wght@400;500;600&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="styles.css?v=63">
+</head>
+<body>
+    <div class="iphone-frame">
+        <div class="iphone-screen">
+            <!-- iOS Top Status Bar Spacer (47px height) -->
+            <div class="status-bar-spacer"></div>
+
+            <!-- Sliced MT5 Top Toolbar Image with Interactive Overlay Click Zones -->
+            <div class="mt5-header-container">
+                <img src="الشريط العلوي.JPG" class="mt5-header-img" alt="الشريط العلوي">
+                
+                <!-- Timeframe Overlay (for M15) -->
+                <img src="M15.jpg" id="header-tf-overlay" class="hidden" alt="M15">
+                
+                <!-- Live Connection Status Badge -->
+                <div id="connection-status-badge" style="position: absolute; right: 12px; top: 12px; font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 10px; z-index: 50; display: flex; align-items: center; gap: 4px; pointer-events: none; background: rgba(0,0,0,0.55); color: #e5e5e7; backdrop-filter: blur(4px);">
+                    <span id="conn-dot" style="width: 6px; height: 6px; border-radius: 50%; background-color: #ff3b30; display: inline-block;"></span>
+                    <span id="conn-text">Disconnected</span>
+                </div>
+                
+
+                <!-- Transparent click zones mapped over the image buttons -->
+                <!-- One-Click Trading toggle (Far Left) -->
+                <button class="header-overlay-btn" id="quick-trade-toggle-btn" title="تداول بضغطة واحدة" style="left: 3%; width: 10%;"></button>
+                <!-- Timeframe Clock toggle (Second from Left) -->
+                <button class="header-overlay-btn" id="tf-clock-btn" title="التردد الزمني" style="left: 14%; width: 10%;"></button>
+                <!-- Elements click area (Center-Left) -->
+                <button class="header-overlay-btn" id="elements-overlay-btn" title="العناصر" style="left: 34%; width: 10%;"></button>
+                <!-- Indicators click area (Center) -->
+                <button class="header-overlay-btn" id="indicators-overlay-btn" title="المؤشرات" style="left: 45%; width: 10%;"></button>
+                <!-- Crosshair click area (Center-Right) -->
+                <button class="header-overlay-btn" id="crosshair-overlay-btn" title="علامة التصويب" style="left: 56%; width: 10%;"></button>
+            </div>
+
+            <!-- Timeframe selector dropdown -->
+            <div class="timeframe-dropdown hidden" id="tf-dropdown">
+                <div class="tf-option active" data-tf="M5">M5 (5 دقائق)</div>
+                <div class="tf-option" data-tf="M1">M1 (دقيقة)</div>
+                <div class="tf-option" data-tf="M15">M15 (15 دقيقة)</div>
+                <div class="tf-option" data-tf="M30">M30 (30 دقيقة)</div>
+                <div class="tf-option" data-tf="H1">H1 (ساعة)</div>
+                <div class="tf-option" data-tf="H4">H4 (4 ساعات)</div>
+                <div class="tf-option" data-tf="D1">D1 (يومي)</div>
+            </div>
+
+            <!-- Technical Drawings Selector Popup -->
+            <div class="drawings-popup hidden" id="drawings-popup">
+                <div class="popup-title">إدراج عنصر فني</div>
+                <div class="popup-options">
+                    <button class="popup-option-btn" id="tool-draw-rect-btn">
+                        <span class="tool-icon">⬜</span> مستطيل (Rectangle)
+                    </button>
+                    <button class="popup-option-btn" id="tool-draw-arrow-btn">
+                        <span class="tool-icon">↗️</span> خط سهم (Arrow)
+                    </button>
+                    <button class="popup-option-btn" id="tool-draw-clear-btn" style="color: var(--mt5-red);">
+                        <span>🗑️</span> مسح جميع الرسومات
+                    </button>
+                </div>
+            </div>
+
+            <!-- Drawing Properties Modal (خصائص) -->
+            <div class="properties-modal hidden" id="properties-modal">
+                <div class="prop-header">
+                    <button class="prop-back-btn" id="prop-cancel-btn">تم</button>
+                    <div class="prop-title">خصائص</div>
+                    <button class="prop-save-btn" id="prop-save-btn">حفظ</button>
+                </div>
+                <div class="prop-scroll-content">
+                    <!-- الثوابت (Constants) -->
+                    <div class="prop-section-title">الثوابت</div>
+                    <div class="prop-group">
+                        <div class="prop-item">
+                            <span>الاسم</span>
+                            <input type="text" id="prop-name-input" value="مستطيل">
+                        </div>
+                        <div class="prop-item" id="prop-fill-row">
+                            <span>نافذ (تعبئة)</span>
+                            <label class="ios-switch">
+                                <input type="checkbox" id="prop-fill-checkbox" checked>
+                                <span class="ios-slider"></span>
+                            </label>
+                        </div>
+                        <div class="prop-item" id="prop-border-row">
+                            <span>رسم الإطار</span>
+                            <label class="ios-switch">
+                                <input type="checkbox" id="prop-border-checkbox" checked>
+                                <span class="ios-slider"></span>
+                            </label>
+                        </div>
+                        <div class="prop-item">
+                            <span>قفل العنصر</span>
+                            <label class="ios-switch">
+                                <input type="checkbox" id="prop-lock-checkbox">
+                                <span class="ios-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- إحداثيات (Coordinates) -->
+                    <div class="prop-section-title">إحداثيات</div>
+                    <div class="prop-group">
+                        <div class="prop-coord-row">
+                            <input type="number" id="prop-price1-input" step="0.001" style="width: 45%;">
+                            <input type="text" id="prop-time1-input" readonly style="width: 25%; text-align: center;">
+                            <input type="text" id="prop-date1-input" readonly style="width: 25%; text-align: center;">
+                        </div>
+                        <div class="prop-coord-row">
+                            <input type="number" id="prop-price2-input" step="0.001" style="width: 45%;">
+                            <input type="text" id="prop-time2-input" readonly style="width: 25%; text-align: center;">
+                            <input type="text" id="prop-date2-input" readonly style="width: 25%; text-align: center;">
+                        </div>
+                    </div>
+
+                    <!-- تخيل (Visualization) -->
+                    <div class="prop-section-title">تخيل</div>
+                    <div class="prop-group">
+                        <div class="prop-item">
+                            <span>رمز</span>
+                            <span class="prop-value">XAUUSD</span>
+                        </div>
+                        <div class="prop-item">
+                            <span>الإطار الزمني</span>
+                            <span class="prop-value">جميع الإطارات الزمنية</span>
+                        </div>
+                    </div>
+
+                    <!-- نمط (Style) -->
+                    <div class="prop-section-title">نمط</div>
+                    <div class="prop-group" style="padding: 15px;">
+                        <div class="prop-style-row">
+                            <span style="font-size: 13px;">نمط</span>
+                            <div class="prop-color-circle-wrapper">
+                                <input type="color" id="prop-color-picker" value="#ffffff">
+                            </div>
+                        </div>
+                        <div class="prop-style-row" style="margin-top: 15px;">
+                            <span>السماكة</span>
+                            <input type="range" id="prop-thickness-slider" min="1" max="5" value="1" style="width: 60%;">
+                        </div>
+                        <div class="prop-style-row" style="margin-top: 15px;" id="prop-dash-row">
+                            <span>الشكل</span>
+                            <select id="prop-dash-select" style="padding: 3px; font-size: 12px; border-radius: 4px; border: 1px solid #ccc;">
+                                <option value="solid">متصل (Solid)</option>
+                                <option value="dashed">متقطع (Dashed)</option>
+                                <option value="dotted">منقط (Dotted)</option>
+                            </select>
+                        </div>
+                        <div class="prop-style-row" style="margin-top: 15px;" id="prop-arrow-type-row">
+                            <span>نوع السهم</span>
+                            <select id="prop-arrow-style-select" style="padding: 3px; font-size: 11px; border-radius: 4px; border: 1px solid #ccc; max-width: 65%;">
+                                <option value="filledTriangle">Line with Filled Triangle Arrowhead</option>
+                                <option value="openV">Trend Line Arrow</option>
+                                <option value="doubleArrow">Arrowed Trend Line</option>
+                                <option value="sharpTriangle">Straight Arrow with Filled Arrowhead</option>
+                                <option value="techAnalysis">Technical Analysis Arrow</option>
+                            </select>
+                        </div>
+                        <div class="prop-item" style="padding: 10px 0 0 0; border-bottom: none; margin-top: 10px;">
+                            <span>رسم كخلفية</span>
+                            <label class="ios-switch">
+                                <input type="checkbox" id="prop-bg-checkbox" checked>
+                                <span class="ios-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- أزرار إضافية -->
+                    <button class="prop-delete-btn" id="prop-delete-btn">حذف العنصر الفني</button>
+                </div>
+            </div>
+
+            <!-- MT5 One-Click Trading Panel (Toggleable, Styled with CSS) -->
+            <div class="trading-panel hidden" id="one-click-panel">
+                <div class="trade-btn sell" id="quick-sell-btn">
+                    <span class="btn-label">SELL</span>
+                    <span class="price-val" id="sell-price-display">3982.<span class="large-price">01</span><sup class="super-price">3</sup></span>
+                </div>
+                <div class="lot-selector">
+                    <button class="lot-adjust" id="lot-down">▼</button>
+                    <input type="number" id="lot-input" value="0.01" step="0.01" min="0.01">
+                    <button class="lot-adjust" id="lot-up">▲</button>
+                </div>
+                <div class="trade-btn buy" id="quick-buy-btn">
+                    <span class="btn-label">BUY</span>
+                    <span class="price-val" id="buy-price-display">3982.<span class="large-price">06</span><sup class="super-price">3</sup></span>
+                </div>
+            </div>
+
+            <!-- Main App Content Container -->
+            <div class="app-body">
+                <!-- Quotes Page (Hidden by default) -->
+                <div class="page hidden" id="page-quotes">
+                    <div class="page-header">الأسعار (Quotes)</div>
+                    <div class="page-scrollable">
+                        <div class="quotes-list">
+                            <div class="quote-item">
+                                <div class="quote-symbol">XAUUSD</div>
+                                <div class="quote-prices">
+                                    <div class="quote-price sell" id="quote-sell-val">3982.01</div>
+                                    <div class="quote-price buy" id="quote-buy-val">3982.06</div>
+                                </div>
+                            </div>
+                            <div class="quote-item">
+                                <div class="quote-symbol">EURUSD</div>
+                                <div class="quote-prices">
+                                    <div class="quote-price sell">1.0842</div>
+                                    <div class="quote-price buy">1.0843</div>
+                                </div>
+                            </div>
+                            <div class="quote-item">
+                                <div class="quote-symbol">GBPUSD</div>
+                                <div class="quote-prices">
+                                    <div class="quote-price sell">1.2631</div>
+                                    <div class="quote-price buy">1.2633</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trade Page (Hidden by default) -->
+                <div class="page hidden" id="page-trade">
+                    <div class="page-header">تداول (Trade)</div>
+                    <div class="page-scrollable">
+                        <div class="balance-card">
+                            <div class="balance-row">
+                                <span>الرصيد:</span>
+                                <span id="balance-val">$10,000.00</span>
+                            </div>
+                            <div class="balance-row">
+                                <span>حقوق الملكية (Equity):</span>
+                                <span id="equity-val">$10,000.00</span>
+                            </div>
+                            <div class="balance-row">
+                                <span>الهامش المتاح:</span>
+                                <span id="margin-free-val">$10,000.00</span>
+                            </div>
+                        </div>
+                        <div class="positions-list" id="positions-list-container">
+                            <div class="no-positions">لا توجد صفقات مفتوحة حالياً.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- History Page (Hidden by default) -->
+                <div class="page hidden" id="page-history">
+                    <div class="page-header">التاريخ (History)</div>
+                    <div class="page-scrollable">
+                        <div class="history-list" id="history-list-container">
+                            <div class="no-history">لا توجد صفقات مغلقة في السجل.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Page (Hidden by default) -->
+                <div class="page hidden" id="page-settings">
+                    <div class="page-header">الإعدادات (Settings)</div>
+                    <div class="page-scrollable">
+                        <div class="settings-group">
+                            <div class="settings-title">حساب التداول التجريبي</div>
+                            <div class="settings-item">
+                                <span>رأس المال المبدئي</span>
+                                <input type="number" id="initial-balance-input" value="10000" style="width: 100px; text-align: left;">
+                            </div>
+                            <button class="settings-btn" id="reset-balance-btn">إعادة تعيين الحساب</button>
+                        </div>
+
+                        <div class="settings-group">
+                            <div class="settings-title">استيراد البيانات التاريخية</div>
+                            <div class="settings-item">
+                                <span>ملف CSV للشموع</span>
+                                <label class="csv-upload-label">
+                                    اختر ملف CSV
+                                    <input type="file" id="csv-file-input" accept=".csv" class="hidden">
+                                </label>
+                            </div>
+                            <div style="font-size: 10px; color: #888; margin-top: 5px; padding: 0 15px;">
+                                تنسيق CSV الموصى به: Date, Time, Open, High, Low, Close أو Time, Open, High, Low, Close
+                            </div>
+                            <button class="settings-btn" id="reset-data-btn" style="background-color: #777; margin-top: 10px;">إعادة تعيين البيانات الافتراضية</button>
+                        </div>
+
+                        <div class="settings-group">
+                            <div class="settings-title">تحديث التطبيق وتخطي الكاش (Force Update)</div>
+                            <button class="settings-btn" id="force-update-btn" style="background-color: #d03a20; margin-top: 5px;">تحديث وتفريغ كاش الهاتف</button>
+                        </div>
+
+                        <div class="settings-group">
+                            <div class="settings-title">مظهر المنصة (Appearance)</div>
+                            <div class="settings-item">
+                                <span>الوضع الليلي (Dark Mode)</span>
+                                <label class="ios-switch">
+                                    <input type="checkbox" id="dark-mode-toggle">
+                                    <span class="ios-slider"></span>
+                                </label>
+                            </div>
+                            <div class="settings-item">
+                                <span>حركة الشموع السلسة (Realistic Replay)</span>
+                                <label class="ios-switch">
+                                    <input type="checkbox" id="setting-smooth-replay" checked>
+                                    <span class="ios-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <div class="settings-title">أبعاد صفقات وعناصر الشارت (Chart Elements & Sizing)</div>
+                            <div class="settings-item">
+                                <span>الارتفاع المرئي للكلمات</span>
+                                <input type="number" id="setting-label-height" value="11" step="any" style="width: 60px; text-align: center;">
+                            </div>
+                            <div class="settings-item">
+                                <span>عرض كلمة BUY</span>
+                                <input type="number" id="setting-buy-width" value="23" step="any" style="width: 60px; text-align: center;">
+                            </div>
+                            <div class="settings-item">
+                                <span>عرض كلمة SELL</span>
+                                <input type="number" id="setting-sell-width" value="28" step="any" style="width: 60px; text-align: center;">
+                            </div>
+                            <div class="settings-item">
+                                <span>عرض لوت BUY (عقد)</span>
+                                <input type="number" id="setting-buy-lot-width" value="25" step="any" style="width: 60px; text-align: center;">
+                            </div>
+                            <div class="settings-item">
+                                <span>عرض لوت SELL (عقد)</span>
+                                <input type="number" id="setting-sell-lot-width" value="23" step="any" style="width: 60px; text-align: center;">
+                            </div>
+                            <div class="settings-item">
+                                <span>تباعد الحروف للكلمات (BUY/SELL)</span>
+                                <input type="number" id="setting-label-spacing" value="2" step="any" style="width: 60px; text-align: center;">
+                            </div>
+                            <div class="settings-item">
+                                <span>تباعد أرقام اللوت (اليسار)</span>
+                                <input type="number" id="setting-lot-spacing" value="0.5" step="any" style="width: 60px; text-align: center;">
+                            </div>
+                            <div class="settings-item">
+                                <span>تباعد أرقام الأسعار (اليمين)</span>
+                                <input type="number" id="setting-prices-spacing" value="0.5" step="any" style="width: 60px; text-align: center;">
+                            </div>
+                            <div class="settings-item">
+                                <span>تباعد أرقام الوقت (الأسفل)</span>
+                                <input type="number" id="setting-time-spacing" value="0" step="any" style="width: 60px; text-align: center;">
+                            </div>
+                            <div class="settings-item">
+                                <span>المسافة بين الكلمة واللوت</span>
+                                <input type="number" id="setting-label-gap" value="6" step="any" style="width: 60px; text-align: center;">
+                            </div>
+                            <div class="settings-item">
+                                <span>عرض صندوق الأسعار الأيمن</span>
+                                <input type="number" id="setting-price-box-width" value="64" step="any" style="width: 60px; text-align: center;">
+                            </div>
+                            <div class="settings-item">
+                                <span>ارتفاع صندوق الأسعار الأيمن</span>
+                                <input type="number" id="setting-price-box-height" value="13" step="any" style="width: 60px; text-align: center;">
+                            </div>
+                            <div class="settings-item">
+                                <span>ارتفاع سعر ملصق الصفقة (حجم الخط)</span>
+                                <input type="number" id="setting-font-size-label-prices" value="10.5" step="any" style="width: 60px; text-align: center;">
+                            </div>
+                            <div class="settings-item">
+                                <span>عرض/مقياس سعر ملصق الصفقة أفقياً</span>
+                                <input type="number" id="setting-label-prices-scale-x" value="1.0" step="any" style="width: 60px; text-align: center;">
+                            </div>
+                            <div class="settings-item">
+                                <span>تباعد أرقام سعر ملصق الصفقة</span>
+                                <input type="number" id="setting-label-prices-spacing" value="1.0" step="any" style="width: 60px; text-align: center;">
+                            </div>
+                            <div class="settings-item">
+                                <span>سماكة خطوط الصفقات المنقطة</span>
+                                <input type="number" id="setting-trade-line-width" value="0.5" step="any" style="width: 60px; text-align: center;">
+                            </div>
+                            <div class="settings-item">
+                                <span>سماكة ذيل وإطار الشموع</span>
+                                <input type="number" id="setting-wick-width" value="0.25" step="any" style="width: 60px; text-align: center;">
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <div class="settings-title">عمود وأرقام الأسعار اليمنى (Right Price Scale Column)</div>
+                            <div class="settings-item">
+                                <span>عرض عمود الأسعار بالكامل</span>
+                                <input type="number" id="setting-margin-right" value="68" step="any" style="width: 60px; text-align: center;">
+                            </div>
+                            <div class="settings-item">
+                                <span>تباعد السعر عن الخط الفاصل</span>
+                                <input type="number" id="setting-price-axis-offset" value="6" step="any" style="width: 60px; text-align: center;">
+                            </div>
+                            <div class="settings-item">
+                                <span>أقصى عرض مسموح لنص السعر</span>
+                                <input type="number" id="setting-price-axis-max-width" value="56" step="any" style="width: 60px; text-align: center;">
+                            </div>
+                            <div class="settings-item">
+                                <span>ارتفاع أرقام الأسعار (حجم الخط)</span>
+                                <input type="number" id="setting-font-size-prices" value="11" step="any" style="width: 60px; text-align: center;">
+                            </div>
+                            <div class="settings-item">
+                                <span>عرض/مقياس أرقام الأسعار أفقياً</span>
+                                <input type="number" id="setting-prices-scale-x" value="1.0" step="any" style="width: 60px; text-align: center;">
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <div class="settings-title">تخصيص أنواع الخطوط والسماكة (Fonts & Weight)</div>
+                            <div class="settings-item" style="flex-direction: column; align-items: stretch; gap: 4px;">
+                                <span>خط صفقات الشراء والبيع (BUY/SELL)</span>
+                                <select id="setting-font-labels" class="settings-select">
+                                    <option value="system-ui">خط النظام الافتراضي (System Default)</option>
+                                    <option value='"SF Pro Display", -apple-system, sans-serif'>SF Pro Display (أبل)</option>
+                                    <option value='"SF Pro Text", -apple-system, sans-serif'>SF Pro Text (أبل)</option>
+                                    <option value='"Helvetica Neue", Helvetica, sans-serif' selected>Helvetica Neue (أبل)</option>
+                                    <option value='"Helvetica", sans-serif'>Helvetica</option>
+                                    <option value='"Inter", sans-serif'>Inter (راقٍ)</option>
+                                    <option value='"Outfit", sans-serif'>Outfit (حديث)</option>
+                                    <option value='"Poppins", sans-serif'>Poppins (دائري)</option>
+                                    <option value='"Montserrat", sans-serif'>Montserrat</option>
+                                    <option value='"Roboto", sans-serif'>Roboto (أندرويد)</option>
+                                    <option value='"Open Sans", sans-serif'>Open Sans</option>
+                                    <option value='"Lato", sans-serif'>Lato</option>
+                                    <option value='"Segoe UI", sans-serif'>Segoe UI (ويندوز)</option>
+                                    <option value='"Arial", sans-serif'>Arial (كلاسيكي)</option>
+                                    <option value='"Avenir Next", "Avenir", sans-serif'>Avenir Next</option>
+                                    <option value='"Trebuchet MS", sans-serif'>Trebuchet MS</option>
+                                    <option value='"Geneva", sans-serif'>Geneva</option>
+                                    <option value='"Verdana", sans-serif'>Verdana</option>
+                                    <option value='"Tahoma", sans-serif'>Tahoma</option>
+                                    <option value='sans-serif'>Sans-Serif الافتراضي</option>
+                                </select>
+                            </div>
+                            <div class="settings-item" style="flex-direction: column; align-items: stretch; gap: 4px; margin-top: 10px;">
+                                <span>سماكة خط صفقات BUY/SELL (Weight)</span>
+                                <select id="setting-weight-labels" class="settings-select">
+                                    <option value="100">100 (نحيف جداً)</option>
+                                    <option value="150">150</option>
+                                    <option value="200">200</option>
+                                    <option value="250">250</option>
+                                    <option value="300">300</option>
+                                    <option value="350">350</option>
+                                    <option value="400" selected>400 (عادي - افتراضي)</option>
+                                    <option value="450">450</option>
+                                    <option value="500">500</option>
+                                    <option value="550">550</option>
+                                    <option value="600">600</option>
+                                    <option value="650">650</option>
+                                    <option value="700">700 (سميك)</option>
+                                    <option value="750">750</option>
+                                    <option value="800">800</option>
+                                    <option value="850">850</option>
+                                    <option value="900">900 (سميك جداً)</option>
+                                </select>
+                            </div>
+                            <div class="settings-item" style="flex-direction: column; align-items: stretch; gap: 4px; margin-top: 10px;">
+                                <span>خط عمود الأسعار الجانبي (Prices Scale)</span>
+                                <select id="setting-font-prices" class="settings-select">
+                                    <option value="system-ui">خط النظام الافتراضي (System Default)</option>
+                                    <option value='"SF Pro Display", -apple-system, sans-serif' selected>SF Pro Display (أبل)</option>
+                                    <option value='"SF Pro Text", -apple-system, sans-serif'>SF Pro Text (أبل)</option>
+                                    <option value='"Helvetica Neue", Helvetica, sans-serif'>Helvetica Neue (أبل)</option>
+                                    <option value='"Helvetica", sans-serif'>Helvetica</option>
+                                    <option value='"Inter", sans-serif'>Inter (راقٍ)</option>
+                                    <option value='"Outfit", sans-serif'>Outfit (حديث)</option>
+                                    <option value='"Poppins", sans-serif'>Poppins (دائري)</option>
+                                    <option value='"Montserrat", sans-serif'>Montserrat</option>
+                                    <option value='"Roboto", sans-serif'>Roboto (أندرويد)</option>
+                                    <option value='"Open Sans", sans-serif'>Open Sans</option>
+                                    <option value='"Lato", sans-serif'>Lato</option>
+                                    <option value='"Segoe UI", sans-serif'>Segoe UI (ويندوز)</option>
+                                    <option value='"Arial", sans-serif'>Arial (كلاسيكي)</option>
+                                    <option value='"Avenir Next", "Avenir", sans-serif'>Avenir Next</option>
+                                    <option value='"Trebuchet MS", sans-serif'>Trebuchet MS</option>
+                                    <option value='"Geneva", sans-serif'>Geneva</option>
+                                    <option value='"Verdana", sans-serif'>Verdana</option>
+                                    <option value='"Tahoma", sans-serif'>Tahoma</option>
+                                    <option value='sans-serif'>Sans-Serif الافتراضي</option>
+                                </select>
+                            </div>
+                            <div class="settings-item" style="flex-direction: column; align-items: stretch; gap: 4px; margin-top: 10px;">
+                                <span>سماكة خط الأسعار (Weight)</span>
+                                <select id="setting-weight-prices" class="settings-select">
+                                    <option value="100">100 (نحيف جداً)</option>
+                                    <option value="150">150</option>
+                                    <option value="200">200</option>
+                                    <option value="250">250</option>
+                                    <option value="300">300</option>
+                                    <option value="350">350</option>
+                                    <option value="400" selected>400 (عادي - افتراضي)</option>
+                                    <option value="450">450</option>
+                                    <option value="500">500</option>
+                                    <option value="550">550</option>
+                                    <option value="600">600</option>
+                                    <option value="650">650</option>
+                                    <option value="700">700 (سميك)</option>
+                                    <option value="750">750</option>
+                                    <option value="800">800</option>
+                                    <option value="850">850</option>
+                                    <option value="900">900 (سميك جداً)</option>
+                                </select>
+                            </div>
+                            <div class="settings-item" style="flex-direction: column; align-items: stretch; gap: 4px; margin-top: 10px;">
+                                <span>خط توقيت الشموع السفلي (Time Scale)</span>
+                                <select id="setting-font-time" class="settings-select">
+                                    <option value="system-ui">خط النظام الافتراضي (System Default)</option>
+                                    <option value='"SF Pro Display", -apple-system, sans-serif' selected>SF Pro Display (أبل)</option>
+                                    <option value='"SF Pro Text", -apple-system, sans-serif'>SF Pro Text (أبل)</option>
+                                    <option value='"Helvetica Neue", Helvetica, sans-serif'>Helvetica Neue (أبل)</option>
+                                    <option value='"Helvetica", sans-serif'>Helvetica</option>
+                                    <option value='"Inter", sans-serif'>Inter (راقٍ)</option>
+                                    <option value='"Outfit", sans-serif'>Outfit (حديث)</option>
+                                    <option value='"Poppins", sans-serif'>Poppins (دائري)</option>
+                                    <option value='"Montserrat", sans-serif'>Montserrat</option>
+                                    <option value='"Roboto", sans-serif'>Roboto (أندرويد)</option>
+                                    <option value='"Open Sans", sans-serif'>Open Sans</option>
+                                    <option value='"Lato", sans-serif'>Lato</option>
+                                    <option value='"Segoe UI", sans-serif'>Segoe UI (ويندوز)</option>
+                                    <option value='"Arial", sans-serif'>Arial (كلاسيكي)</option>
+                                    <option value='"Avenir Next", "Avenir", sans-serif'>Avenir Next</option>
+                                    <option value='"Trebuchet MS", sans-serif'>Trebuchet MS</option>
+                                    <option value='"Geneva", sans-serif'>Geneva</option>
+                                    <option value='"Verdana", sans-serif'>Verdana</option>
+                                    <option value='"Tahoma", sans-serif'>Tahoma</option>
+                                    <option value='sans-serif'>Sans-Serif الافتراضي</option>
+                                </select>
+                            </div>
+                            <div class="settings-item" style="flex-direction: column; align-items: stretch; gap: 4px; margin-top: 10px;">
+                                <span>سماكة خط توقيت الشموع (Weight)</span>
+                                <select id="setting-weight-time" class="settings-select">
+                                    <option value="100">100 (نحيف جداً)</option>
+                                    <option value="150">150</option>
+                                    <option value="200">200</option>
+                                    <option value="250">250</option>
+                                    <option value="300">300</option>
+                                    <option value="350">350</option>
+                                    <option value="400" selected>400 (عادي - افتراضي)</option>
+                                    <option value="450">450</option>
+                                    <option value="500">500</option>
+                                    <option value="550">550</option>
+                                    <option value="600">600</option>
+                                    <option value="650">650</option>
+                                    <option value="700">700 (سميك)</option>
+                                    <option value="750">750</option>
+                                    <option value="800">800</option>
+                                    <option value="850">850</option>
+                                    <option value="900">900 (سميك جداً)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <div class="settings-title">إعدادات محور الوقت والنقاط الثلاث (Time Axis & Three Dots)</div>
+                            <div class="settings-item">
+                                <span>التباعد بين الفواصل (بكسل)</span>
+                                <input type="number" id="setting-time-spacing-px" value="92" step="any" style="width: 60px; text-align: center;">
+                            </div>
+                            <div class="settings-item">
+                                <span>دورة السحب للتصفير (بكسل)</span>
+                                <input type="number" id="setting-time-max-offset" value="44" step="any" style="width: 60px; text-align: center;">
+                            </div>
+                            <div class="settings-item">
+                                <span>هامش إخفاء التاريخ الأيمن (بكسل)</span>
+                                <input type="number" id="setting-time-right-margin" value="11" step="any" style="width: 60px; text-align: center;">
+                            </div>
+                            <div class="settings-item">
+                                <span>موقع النقاط الثلاث أفقياً (بكسل)</span>
+                                <input type="number" id="setting-three-dots-x" value="34" step="any" style="width: 60px; text-align: center;">
+                            </div>
+                            <div class="settings-item">
+                                <span>موقع النقاط الثلاث عمودياً (بكسل)</span>
+                                <input type="number" id="setting-three-dots-y" value="630" step="any" style="width: 60px; text-align: center;">
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <div class="settings-title">أدوات الرسم (Drawing Tools)</div>
+                            <div class="settings-item">
+                                <span>نوع السهم (Arrow Type)</span>
+                                <select id="setting-arrow-style" style="padding: 4px; font-size: 11px; border-radius: 4px; border: 1px solid #ccc; background: var(--input-bg); color: var(--text-primary); max-width: 55%;">
+                                    <option value="filledTriangle">Line with Filled Triangle Arrowhead</option>
+                                    <option value="openV">Trend Line Arrow</option>
+                                    <option value="doubleArrow">Arrowed Trend Line</option>
+                                    <option value="sharpTriangle">Straight Arrow with Filled Arrowhead</option>
+                                    <option value="techAnalysis">Technical Analysis Arrow</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <div class="settings-title">ألوان صفقات BUY / SELL والملصقات</div>
+                            <div class="settings-color-container">
+                                <div class="settings-color-item">
+                                    <span>خط وكلمة الشراء BUY</span>
+                                    <input type="color" id="setting-color-buy-label" value="#3C81FF">
+                                </div>
+                                <div class="settings-color-item">
+                                    <span>لون لوت الشراء (الرقم الأيسر)</span>
+                                    <input type="color" id="setting-color-buy-text" value="#3C81FF">
+                                </div>
+                                <div class="settings-color-item">
+                                    <span>كلمة البيع SELL</span>
+                                    <input type="color" id="setting-color-sell-word" value="#E94015">
+                                </div>
+                                <div class="settings-color-item">
+                                    <span>خط وإطار البيع SELL</span>
+                                    <input type="color" id="setting-color-sell-line" value="#E94015">
+                                </div>
+                                <div class="settings-color-item">
+                                    <span>لون لوت البيع (الرقم الأيسر)</span>
+                                    <input type="color" id="setting-color-sell-text" value="#E94015">
+                                </div>
+                                <div class="settings-color-item">
+                                    <span>لون الفريم والوصف (M5 / Gold vs US Dollar)</span>
+                                    <input type="color" id="setting-color-subtitle" value="#50535e">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <div class="settings-title">الألوان (Colors)</div>
+                            <div class="settings-item" style="flex-direction: column; align-items: stretch; gap: 8px;">
+                                <span style="font-weight: bold; font-size: 12px; color: #8e8e93;">النماذج الجاهزة (Presets)</span>
+                                <div class="presets-container" style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 5px;">
+                                    <button class="preset-btn active" id="preset-default">افتراضي</button>
+                                    <button class="preset-btn" id="preset-green-black">أخضر/أسود</button>
+                                    <button class="preset-btn" id="preset-black-white">أسود/أبيض</button>
+                                    <button class="preset-btn" id="preset-tv">ترادينج فيو</button>
+                                </div>
+                            </div>
+                            <div class="settings-color-container">
+                                <div class="settings-color-item">
+                                    <span>خلفية الشارت</span>
+                                    <input type="color" id="color-bg" value="#ffffff">
+                                </div>
+                                <div class="settings-color-item">
+                                    <span>أمام</span>
+                                    <input type="color" id="color-foreground" value="#474747">
+                                </div>
+                                <div class="settings-color-item">
+                                    <span>شبكة</span>
+                                    <input type="color" id="color-grid" value="#C2C2C2">
+                                </div>
+                                <div class="settings-color-item">
+                                    <span>شريط صاعد</span>
+                                    <input type="color" id="color-bar-up" value="#2962ff">
+                                </div>
+                                <div class="settings-color-item">
+                                    <span>شريط هابط</span>
+                                    <input type="color" id="color-bar-down" value="#ff1744">
+                                </div>
+                                <div class="settings-color-item">
+                                    <span>شمعة صاعدة</span>
+                                    <input type="color" id="color-bull" value="#2962ff">
+                                </div>
+                                <div class="settings-color-item">
+                                    <span>شمعة هابطة</span>
+                                    <input type="color" id="color-bear" value="#ff1744">
+                                </div>
+                                <div class="settings-color-item">
+                                    <span>خط الرسم البياني</span>
+                                    <input type="color" id="color-chart-line" value="#00e676">
+                                </div>
+                                <div class="settings-color-item">
+                                    <span>الأحجام</span>
+                                    <input type="color" id="color-volumes" value="#00b0ff">
+                                </div>
+                                <div class="settings-color-item">
+                                    <span>سعر خط العرض</span>
+                                    <input type="color" id="color-bid-line" value="#00A86B">
+                                </div>
+                                <div class="settings-color-item">
+                                    <span>خط سعر الطلب</span>
+                                    <input type="color" id="color-ask-line" value="#ff9f0a">
+                                </div>
+                                <div class="settings-color-item">
+                                    <span>مستويات توقف</span>
+                                    <input type="color" id="color-stop-levels" value="#d50000">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <div class="settings-title">حفظ وإعادة تعيين التخصيصات (Save & Reset)</div>
+                            <div style="padding: 15px; display: flex; flex-direction: column; gap: 10px;">
+                                <button class="settings-btn" id="save-settings-btn" style="background-color: #34c759; margin: 0; width: 100%;">حفظ جميع الإعدادات (Save Settings)</button>
+                                <button class="settings-btn" id="reset-customizations-btn" style="background-color: #ff9500; margin: 0; width: 100%;">إعادة تعيين تخصيصات المظهر والخطوط فقط</button>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <div class="settings-title">تثبيت التطبيق على الجوال</div>
+                            <div style="padding: 15px; font-size: 13px; color: #333; line-height: 1.6; text-align: right; font-family: Arial, sans-serif;">
+                                <p style="font-weight: bold; color: #000; margin-bottom: 8px;">لتثبيت الموقع وتصفحه كتطبيق مستقل كامل الشاشة:</p>
+                                <ol style="margin-right: 20px; margin-top: 5px; padding-right: 10px;">
+                                    <li>اضغط على زر <strong>مشاركة (Share)</strong> <span style="font-size: 16px; color: #2962ff;">⎙</span> في شريط Safari السفلي.</li>
+                                    <li>اختر <strong>إضافة إلى الشاشة الرئيسية (Add to Home Screen)</strong> من الخيارات.</li>
+                                    <li>انقر فوق <strong>إضافة (Add)</strong> لتثبيت التطبيق.</li>
+                                </ol>
+                                <p style="margin-top: 10px; font-size: 11px; color: #8e8e93;">* عند فتح التطبيق من شاشتك الرئيسية، سيعمل بدون حواف المتصفح وبنفس مقاس الهاتف.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chart Page (Active by default) -->
+                <div class="page" id="page-chart">
+                    <div class="chart-container">
+                        <!-- Chart info overlay in top-left (Clickable to toggle timeframe or settings) -->
+                        <div class="chart-info" id="chart-title-toggle">
+                            <div class="symbol-timeframe">
+                                <span class="symbol-blue">XAUUSD</span>
+                                <span class="arrow-blue">▼</span>
+                                <span class="tf-grey" id="active-tf-display">M5</span>
+                            </div>
+                            <div class="symbol-desc">Gold vs US Dollar</div>
+                        </div>
+
+                        <!-- Canvas for drawing the chart -->
+                        <canvas id="main-chart-canvas"></canvas>
+
+                        <!-- Canvas overlay for crosshair tool info -->
+                        <div class="crosshair-info hidden" id="crosshair-val-x">--:--</div>
+                        <div class="crosshair-info hidden" id="crosshair-val-y">------</div>
+
+                        <!-- Replay panel toggle button (transparent overlay in the bottom-right over the three dots) -->
+                        <button class="replay-toggle-btn" id="replay-panel-toggle" title="لوحة الإعادة"></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Replay Control Panel (الريبلي مود) -->
+            <div class="replay-controls-panel hidden" id="replay-widget">
+                <button class="replay-close-btn" id="replay-close" title="إنهاء وضع الإعادة">×</button>
+                <button class="replay-minimize-btn" id="replay-minimize" title="إخفاء لوحة التحكم">▼</button>
+                <div class="replay-title">وضع إعادة تشغيل البيانات (Replay Mode)</div>
+                <div class="replay-row">
+                    <button class="replay-btn" id="replay-prev" title="الشمعة السابقة">⏮</button>
+                    <button class="replay-btn" id="replay-play" title="تشغيل">▶</button>
+                    <button class="replay-btn" id="replay-pause" title="إيقاف مؤقت">⏸</button>
+                    <button class="replay-btn" id="replay-next" title="الشمعة التالية">⏭</button>
+                </div>
+                <div class="replay-speed-row">
+                    <span style="font-size: 11px; margin-right: 5px; margin-left: 5px;">السرعة:</span>
+                    <button class="speed-btn" data-speed="0.5">0.5x</button>
+                    <button class="speed-btn active" data-speed="1">1x</button>
+                    <button class="speed-btn" data-speed="2">2x</button>
+                    <button class="speed-btn" data-speed="5">5x</button>
+                    <button class="speed-btn" data-speed="10">10x</button>
+                </div>
+                <div class="replay-progress">
+                    <span id="replay-candle-count">الشموع: 0 / 0</span>
+                </div>
+            </div>
+
+            <!-- Sliced MT5 Bottom Navigation Image with Interactive Overlay Click Zones -->
+            <div class="bottom-nav-container">
+                <img src="الشريط السفلي.JPG" class="bottom-nav-img" alt="الشريط السفلي">
+                
+                <!-- Helper masks to visually change the active tab -->
+                <div class="nav-mask" id="nav-mask-chart-grey"></div>
+                <div class="nav-tint" id="nav-tint-active"></div>
+                
+
+                <!-- Transparent click zones for 5 tabs -->
+                <!-- Quotes (الأسعار) - Far Right -->
+                <button class="nav-overlay-btn" id="nav-quotes" data-target="page-quotes" style="right: 0;"></button>
+                <!-- Chart (رسم بياني) - Second from Right -->
+                <button class="nav-overlay-btn" id="nav-chart" data-target="page-chart" style="right: 20%;"></button>
+                <!-- Trade (تداول) - Center -->
+                <button class="nav-overlay-btn" id="nav-trade" data-target="page-trade" style="right: 40%;"></button>
+                <!-- History (التاريخ) - Second from Left -->
+                <button class="nav-overlay-btn" id="nav-history" data-target="page-history" style="right: 60%;"></button>
+                <!-- Settings (الإعدادات) - Far Left -->
+                <button class="nav-overlay-btn" id="nav-settings" data-target="page-settings" style="right: 80%;"></button>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="app.js?v=63"></script>
+</body>
+</html>
