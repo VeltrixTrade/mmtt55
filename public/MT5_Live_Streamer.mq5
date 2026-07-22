@@ -83,7 +83,12 @@ bool SendInitialData()
    int countM5  = CopyRates(_Symbol, PERIOD_M5, 0, InpM5History, ratesM5);
    int countM15 = CopyRates(_Symbol, PERIOD_M15, 0, InpM15History, ratesM15);
    
-   if (countM5 <= 0 || countM15 <= 0)
+   // Fallback to smaller bar count if broker history is not fully downloaded yet
+   if (countM5 <= 0) countM5 = CopyRates(_Symbol, PERIOD_M5, 0, 300, ratesM5);
+   if (countM5 <= 0) countM5 = CopyRates(_Symbol, PERIOD_M5, 0, 100, ratesM5);
+   if (countM15 <= 0) countM15 = CopyRates(_Symbol, PERIOD_M15, 0, 100, ratesM15);
+   
+   if (countM5 <= 0)
    {
       Print("WARNING: Waiting for price data history to load from broker...");
       return false;
@@ -115,7 +120,7 @@ bool SendInitialData()
    {
       Print("✅ Initial Data Sent Successfully: ", countM5, " M5 candles & ", countM15, " M15 candles.");
       g_lastM5Time  = ratesM5[countM5 - 1].time;
-      g_lastM15Time = ratesM15[countM15 - 1].time;
+      if (countM15 > 0) g_lastM15Time = ratesM15[countM15 - 1].time;
       g_lastBid     = lastTick.bid;
       g_lastAsk     = lastTick.ask;
       g_lastM5Close = ratesM5[countM5 - 1].close;
@@ -155,17 +160,16 @@ void OnDeinit(const int reason)
 //+------------------------------------------------------------------+
 void OnTimer()
 {
-   // Retry initial snapshot if not confirmed yet
+   // Non-blocking initial snapshot retry
    if (!g_initialSent)
    {
       datetime now = TimeCurrent();
       if (now - g_lastRetryTime >= 3)
       {
          g_lastRetryTime = now;
-         Print("🔄 Attempting to send initial 900 M5 & 300 M15 snapshot...");
+         Print("🔄 Attempting to send initial snapshot...");
          SendInitialData();
       }
-      return;
    }
 
    MqlTick tick;
