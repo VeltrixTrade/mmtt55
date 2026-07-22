@@ -135,6 +135,42 @@ function handleMt5Payload(payload) {
             candlesM15: state.candlesM15,
             mt5Connected: true
         });
+    } else if (action === 'initial_m5') {
+        if (Array.isArray(payload.candlesM5)) {
+            state.candlesM5 = payload.candlesM5.slice(-900);
+        }
+        state.currentBid = payload.currentBid || state.currentBid;
+        state.currentAsk = payload.currentAsk || state.currentAsk;
+        state.symbol = payload.symbol || 'XAUUSD';
+
+        console.log(`[MT5] 🚀 Received Initial M5 Data: ${state.candlesM5.length} candles.`);
+        
+        broadcast({
+            type: 'initial_m5',
+            symbol: state.symbol,
+            currentBid: state.currentBid,
+            currentAsk: state.currentAsk,
+            candlesM5: state.candlesM5,
+            mt5Connected: true
+        });
+    } else if (action === 'initial_m15') {
+        if (Array.isArray(payload.candlesM15)) {
+            state.candlesM15 = payload.candlesM15.slice(-300);
+        }
+        state.currentBid = payload.currentBid || state.currentBid;
+        state.currentAsk = payload.currentAsk || state.currentAsk;
+        state.symbol = payload.symbol || 'XAUUSD';
+
+        console.log(`[MT5] 🚀 Received Initial M15 Data: ${state.candlesM15.length} candles.`);
+        
+        broadcast({
+            type: 'initial_m15',
+            symbol: state.symbol,
+            currentBid: state.currentBid,
+            currentAsk: state.currentAsk,
+            candlesM15: state.candlesM15,
+            mt5Connected: true
+        });
     } else if (action === 'tick') {
         // Real-Time Live Tick Update
         state.currentBid = payload.currentBid || state.currentBid;

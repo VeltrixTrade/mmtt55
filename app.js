@@ -4065,6 +4065,52 @@ function handleWebSocketMessage(data) {
         return;
     }
     
+    if (data.type === 'initial_m5') {
+        State.isWebSocketLive = true;
+        State.mt5Connected = !!data.mt5Connected;
+        updateConnectionStatus(State.mt5Connected, State.mt5Connected ? 'MT5 Live' : 'Disconnected');
+        
+        if (Array.isArray(data.candlesM5) && data.candlesM5.length > 0) {
+            State.candlesM5 = data.candlesM5.map(parseWSCandle).filter(Boolean);
+            State.candlesM5.sort((a, b) => a.time.getTime() - b.time.getTime());
+        }
+        if (data.currentBid) State.currentBid = data.currentBid;
+        if (data.currentAsk) State.currentAsk = data.currentAsk;
+        
+        if (State.timeframeMinutes !== 15 && State.candlesM5.length > 0) {
+            State.candles = State.candlesM5;
+        }
+        
+        console.log(`[WebSocket] M5 Initial Snapshot Loaded: ${State.candlesM5.length} candles.`);
+        updateTradingPanelUI();
+        updatePositionsProfit();
+        drawChart();
+        return;
+    }
+    
+    if (data.type === 'initial_m15') {
+        State.isWebSocketLive = true;
+        State.mt5Connected = !!data.mt5Connected;
+        updateConnectionStatus(State.mt5Connected, State.mt5Connected ? 'MT5 Live' : 'Disconnected');
+        
+        if (Array.isArray(data.candlesM15) && data.candlesM15.length > 0) {
+            State.candlesM15 = data.candlesM15.map(parseWSCandle).filter(Boolean);
+            State.candlesM15.sort((a, b) => a.time.getTime() - b.time.getTime());
+        }
+        if (data.currentBid) State.currentBid = data.currentBid;
+        if (data.currentAsk) State.currentAsk = data.currentAsk;
+        
+        if (State.timeframeMinutes === 15 && State.candlesM15.length > 0) {
+            State.candles = State.candlesM15;
+        }
+        
+        console.log(`[WebSocket] M15 Initial Snapshot Loaded: ${State.candlesM15.length} candles.`);
+        updateTradingPanelUI();
+        updatePositionsProfit();
+        drawChart();
+        return;
+    }
+    
     if (data.type === 'tick') {
         State.mt5Connected = true;
         updateConnectionStatus(true, 'MT5 Live');

@@ -18,8 +18,9 @@ datetime g_lastM15Time  = 0;
 double   g_lastBid      = 0;
 double   g_lastAsk      = 0;
 double   g_lastM5Close  = 0;
-bool     g_initialSent  = false;
-datetime g_lastRetryTime = 0;
+bool     g_initialM5Sent  = false;
+bool     g_initialM15Sent = false;
+datetime g_lastRetryTime  = 0;
 
 //+------------------------------------------------------------------+
 //| Helper: Format MqlRates struct into JSON string                  |
@@ -70,27 +71,20 @@ bool SendJsonPayload(string json, int timeoutMs = 12000)
 }
 
 //+------------------------------------------------------------------+
-//| Helper: Send Initial 900 M5 & 300 M15 Candles                    |
+//| Helper: Send Initial M5 Candles Payload                          |
 //+------------------------------------------------------------------+
-bool SendInitialData()
+bool SendInitialM5Data()
 {
    MqlRates ratesM5[];
-   MqlRates ratesM15[];
-   
    ArraySetAsSeries(ratesM5, false);
-   ArraySetAsSeries(ratesM15, false);
    
-   int countM5  = CopyRates(_Symbol, PERIOD_M5, 0, InpM5History, ratesM5);
-   int countM15 = CopyRates(_Symbol, PERIOD_M15, 0, InpM15History, ratesM15);
-   
-   // Fallback to smaller bar count if broker history is not fully downloaded yet
+   int countM5 = CopyRates(_Symbol, PERIOD_M5, 0, InpM5History, ratesM5);
    if (countM5 <= 0) countM5 = CopyRates(_Symbol, PERIOD_M5, 0, 300, ratesM5);
    if (countM5 <= 0) countM5 = CopyRates(_Symbol, PERIOD_M5, 0, 100, ratesM5);
-   if (countM15 <= 0) countM15 = CopyRates(_Symbol, PERIOD_M15, 0, 100, ratesM15);
    
    if (countM5 <= 0)
    {
-      Print("WARNING: Waiting for price data history to load from broker...");
+      Print("WARNING: Waiting for M5 price history from broker...");
       return false;
    }
    
@@ -105,6 +99,43 @@ bool SendInitialData()
    }
    jsonM5 += "]";
    
+   string json = StringFormat("{\"action\":\"initial_m5\",\"symbol\":\"%s\",\"currentBid\":%.3f,\"currentAsk\":%.3f,\"candlesM5\":%s}",
+                              _Symbol, lastTick.bid, lastTick.ask, jsonM5);
+   
+   if (SendJsonPayload(json, 12000))
+   {
+      Print("✅ Initial M5 Data Sent Successfully: ", countM5, " candles.");
+      g_lastM5Time  = ratesM5[countM5 - 1].time;
+      g_lastBid     = lastTick.bid;
+      g_lastAsk     = lastTick.ask;
+      g_lastM5Close = ratesM5[countM5 - 1].close;
+      g_initialM5Sent = true;
+      return true;
+   }
+   Print("⚠️ M5 initial payload send failed.");
+   return false;
+}
+
+//+------------------------------------------------------------------+
+//| Helper: Send Initial M15 Candles Payload                         |
+//+------------------------------------------------------------------+
+bool SendInitialM15Data()
+{
+   MqlRates ratesM15[];
+   ArraySetAsSeries(ratesM15, false);
+   
+   int countM15 = CopyRates(_Symbol, PERIOD_M15, 0, InpM15History, ratesM15);
+   if (countM15 <= 0) countM15 = CopyRates(_Symbol, PERIOD_M15, 0, 100, ratesM15);
+   
+   if (countM15 <= 0)
+   {
+      Print("WARNING: Waiting for M15 price history from broker...");
+      return false;
+   }
+   
+   MqlTick lastTick;
+   SymbolInfoTick(_Symbol, lastTick);
+   
    string jsonM15 = "[";
    for (int i = 0; i < countM15; i++)
    {
@@ -113,21 +144,17 @@ bool SendInitialData()
    }
    jsonM15 += "]";
    
-   string json = StringFormat("{\"action\":\"initial\",\"symbol\":\"%s\",\"currentBid\":%.3f,\"currentAsk\":%.3f,\"candlesM5\":%s,\"candlesM15\":%s}",
-                              _Symbol, lastTick.bid, lastTick.ask, jsonM5, jsonM15);
+   string json = StringFormat("{\"action\":\"initial_m15\",\"symbol\":\"%s\",\"currentBid\":%.3f,\"currentAsk\":%.3f,\"candlesM15\":%s}",
+                              _Symbol, lastTick.bid, lastTick.ask, jsonM15);
    
    if (SendJsonPayload(json, 12000))
    {
-      Print("✅ Initial Data Sent Successfully: ", countM5, " M5 candles & ", countM15, " M15 candles.");
-      g_lastM5Time  = ratesM5[countM5 - 1].time;
-      if (countM15 > 0) g_lastM15Time = ratesM15[countM15 - 1].time;
-      g_lastBid     = lastTick.bid;
-      g_lastAsk     = lastTick.ask;
-      g_lastM5Close = ratesM5[countM5 - 1].close;
-      g_initialSent = true;
+      Print("✅ Initial M15 Data Sent Successfully: ", countM15, " candles.");
+      g_lastM15Time = ratesM15[countM15 - 1].time;
+      g_initialM15Sent = true;
       return true;
    }
-   Print("⚠️ Initial payload send failed. Will retry automatically...");
+   Print("⚠️ M15 initial payload send failed.");
    return false;
 }
 
@@ -138,8 +165,9 @@ int OnInit()
 {
    Print("🚀 Starting MT5 Live Streamer EA for ", _Symbol);
    
-   // Send initial data snapshot
-   SendInitialData();
+   // Send initial data snapshots
+   SendInitialM5Data();
+   SendInitialM15Data();
    
    // Fast 100ms timer for low-latency tick streaming
    EventSetMillisecondTimer(100);
@@ -160,15 +188,23 @@ void OnDeinit(const int reason)
 //+------------------------------------------------------------------+
 void OnTimer()
 {
-   // Non-blocking initial snapshot retry
-   if (!g_initialSent)
+   // Non-blocking initial snapshots retry
+   if (!g_initialM5Sent || !g_initialM15Sent)
    {
       datetime now = TimeCurrent();
       if (now - g_lastRetryTime >= 3)
       {
          g_lastRetryTime = now;
-         Print("🔄 Attempting to send initial snapshot...");
-         SendInitialData();
+         if (!g_initialM5Sent)
+         {
+            Print("🔄 Retrying M5 initial snapshot...");
+            SendInitialM5Data();
+         }
+         if (!g_initialM15Sent)
+         {
+            Print("🔄 Retrying M15 initial snapshot...");
+            SendInitialM15Data();
+         }
       }
    }
 
