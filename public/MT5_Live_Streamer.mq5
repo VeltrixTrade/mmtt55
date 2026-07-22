@@ -49,6 +49,23 @@ bool SendJsonPayload(string json, int timeoutMs = 12000)
    string responseHeaders;
    string headers = "Content-Type: application/json\r\n";
    
+   string url = InpServerUrl;
+   StringTrimLeft(url);
+   StringTrimRight(url);
+   
+   // Automatically append the endpoint route if user only input the base URL
+   if (StringFind(url, "/api/mt5-data") < 0)
+   {
+      if (StringLen(url) > 0 && StringSubstr(url, StringLen(url) - 1, 1) == "/")
+      {
+         url = url + "api/mt5-data";
+      }
+      else
+      {
+         url = url + "/api/mt5-data";
+      }
+   }
+   
    int len = StringLen(json);
    StringToCharArray(json, postData, 0, len, CP_UTF8);
    
@@ -56,18 +73,25 @@ bool SendJsonPayload(string json, int timeoutMs = 12000)
    ArrayResize(postData, len);
    
    ResetLastError();
-   int res = WebRequest("POST", InpServerUrl, headers, timeoutMs, postData, resultData, responseHeaders);
+   int res = WebRequest("POST", url, headers, timeoutMs, postData, resultData, responseHeaders);
    
    if (res == -1)
    {
       int err = GetLastError();
       if (err == 4014) // ERR_WEBREQUEST_INVALID_URL
       {
-         Print("ERROR: WebRequest not allowed for URL '", InpServerUrl, "'. Please add it to Tools -> Options -> Expert Advisors -> Allow WebRequest.");
+         Print("ERROR: WebRequest not allowed for URL '", url, "'. Please add it to Tools -> Options -> Expert Advisors -> Allow WebRequest.");
       }
       return false;
    }
-   return (res == 200);
+   
+   if (res != 200)
+   {
+      Print("ERROR: Server returned status code ", res, " for URL '", url, "'");
+      return false;
+   }
+   
+   return true;
 }
 
 //+------------------------------------------------------------------+
