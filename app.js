@@ -3866,8 +3866,8 @@ function finalizeInit() {
     updateTradingPanelUI();
     updatePositionsProfit();
     
-    // Force clean old service worker cache on first load of version 66
-    if (!localStorage.getItem('sw_migrated_v66')) {
+    // Force clean old service worker cache on first load of version 67
+    if (!localStorage.getItem('sw_migrated_v67')) {
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(registrations => {
                 for (let registration of registrations) {
@@ -3880,7 +3880,7 @@ function finalizeInit() {
                 for (let name of names) caches.delete(name);
             });
         }
-        localStorage.setItem('sw_migrated_v66', 'true');
+        localStorage.setItem('sw_migrated_v67', 'true');
         setTimeout(() => {
             window.location.reload(true); // Force reload to fetch everything fresh
         }, 200);
@@ -3889,7 +3889,7 @@ function finalizeInit() {
 
     // Register PWA Service Worker
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js?v=66')
+        navigator.serviceWorker.register('./sw.js?v=67')
             .then(() => console.log('PWA Service Worker Registered'))
             .catch(err => console.log('Service Worker Registration Failed:', err));
     }
@@ -3942,7 +3942,7 @@ function drawLiveTickUpdate() {
     // 1. Partial slice bounds for current candle
     const candleSpacing = State.zoom;
     const candleWidth = Math.max(0.6, candleSpacing * 0.68);
-    const rawX = getX(lastIdx);
+    const rawX = getXGlobal(lastIdx);
     
     // Safety check: ensure current candle is within visible viewport
     if (rawX < MARGIN_LEFT || rawX > State.width - MARGIN_RIGHT) return;
@@ -3976,10 +3976,10 @@ function drawLiveTickUpdate() {
     }
     
     // Redraw last candle inside slice
-    const yOpen = getY(lastCandle.open);
-    const yClose = getY(lastCandle.close);
-    const yHigh = getY(lastCandle.high);
-    const yLow = getY(lastCandle.low);
+    const yOpen = getYGlobal(lastCandle.open);
+    const yClose = getYGlobal(lastCandle.close);
+    const yHigh = getYGlobal(lastCandle.high);
+    const yLow = getYGlobal(lastCandle.low);
     
     const isBullish = lastCandle.close >= lastCandle.open;
     const strokeColor = isBullish ? State.colors.barUp : State.colors.barDown;
