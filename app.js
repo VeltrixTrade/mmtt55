@@ -1012,8 +1012,8 @@ function drawChartFrame() {
         const boxHeight = State.priceBoxHeight;
         const boxY = y - boxHeight / 2; // Center vertically
         
-        // Draw transparent/white background with border and colored text (reverted from solid cover as requested)
-        ctx.fillStyle = '#FFFFFF';
+        // Draw transparent/white background (or black in dark mode) with border and colored text
+        ctx.fillStyle = State.isDarkMode ? '#000000' : '#FFFFFF';
         ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
         
         ctx.strokeStyle = lineColor;
@@ -1905,7 +1905,7 @@ window.addEventListener('touchend', handlePointerUp, { passive: false });
 
 // --- TICK ENGINE & PRICE SIMULATION ---
 function triggerPriceTick() {
-    if (State.replayMode && State.replayPlaying) {
+    if (State.replayMode) {
         return;
     }
     
@@ -2297,14 +2297,29 @@ function placeOrder(type) {
         return;
     }
     
-    const price = type === 'BUY' ? State.currentAsk : State.currentBid;
+    let price;
+    let orderTime = new Date();
+    if (State.replayMode) {
+        const activeCandles = getActiveCandles();
+        if (activeCandles.length > 0) {
+            const current = activeCandles[activeCandles.length - 1];
+            const replayBid = current.close;
+            const replayAsk = parseFloat((replayBid + State.spread).toFixed(3));
+            price = type === 'BUY' ? replayAsk : replayBid;
+            orderTime = new Date(current.time);
+        } else {
+            price = type === 'BUY' ? State.currentAsk : State.currentBid;
+        }
+    } else {
+        price = type === 'BUY' ? State.currentAsk : State.currentBid;
+    }
     
     const newPos = {
         id: 'pos_' + Date.now(),
         type,
         openPrice: price,
         lot: lotSize,
-        time: new Date(),
+        time: orderTime,
         profit: 0.00
     };
     
@@ -2359,10 +2374,18 @@ function closePosition(posId) {
     State.balance += profit;
     State.positions.splice(idx, 1);
     
+    let closeTime = new Date();
+    if (State.replayMode) {
+        const activeCandles = getActiveCandles();
+        if (activeCandles.length > 0) {
+            closeTime = new Date(activeCandles[activeCandles.length - 1].time);
+        }
+    }
+    
     State.history.push({
         ...pos,
         closePrice,
-        closeTime: new Date(),
+        closeTime,
         profit
     });
     
@@ -3843,8 +3866,8 @@ function finalizeInit() {
     updateTradingPanelUI();
     updatePositionsProfit();
     
-    // Force clean old service worker cache on first load of version 65
-    if (!localStorage.getItem('sw_migrated_v65')) {
+    // Force clean old service worker cache on first load of version 66
+    if (!localStorage.getItem('sw_migrated_v66')) {
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(registrations => {
                 for (let registration of registrations) {
@@ -3857,7 +3880,7 @@ function finalizeInit() {
                 for (let name of names) caches.delete(name);
             });
         }
-        localStorage.setItem('sw_migrated_v65', 'true');
+        localStorage.setItem('sw_migrated_v66', 'true');
         setTimeout(() => {
             window.location.reload(true); // Force reload to fetch everything fresh
         }, 200);
@@ -3866,7 +3889,7 @@ function finalizeInit() {
 
     // Register PWA Service Worker
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js?v=65')
+        navigator.serviceWorker.register('./sw.js?v=66')
             .then(() => console.log('PWA Service Worker Registered'))
             .catch(err => console.log('Service Worker Registration Failed:', err));
     }
@@ -4115,23 +4138,28 @@ function handleWebSocketMessage(data) {
         State.mt5Connected = true;
         updateConnectionStatus(true, 'MT5 Live');
         
+        const tf = data.timeframe || 'M5';
+        const rawCandle = data.candle;
+        if (rawCandle) {
+            const parsedCandle = parseWSCandle(rawCandle);
+            if (tf === 'M5' && State.candlesM5.length > 0) {
+                State.candlesM5[State.candlesM5.length - 1] = parsedCandle;
+            } else if (tf === 'M15' && State.candlesM15.length > 0) {
+                State.candlesM15[State.candlesM15.length - 1] = parsedCandle;
+            }
+        }
+        
+        // If in Replay Mode, do not overwrite the active replay price/panel
+        if (State.replayMode) {
+            return;
+        }
+        
         if (data.currentBid) State.currentBid = data.currentBid;
         if (data.currentAsk) State.currentAsk = data.currentAsk;
         
-        const tf = data.timeframe || 'M5';
-        const rawCandle = data.candle;
-        if (!rawCandle) return;
-        
-        const parsedCandle = parseWSCandle(rawCandle);
-        
-        if (tf === 'M5' && State.candlesM5.length > 0) {
-            State.candlesM5[State.candlesM5.length - 1] = parsedCandle;
-        } else if (tf === 'M15' && State.candlesM15.length > 0) {
-            State.candlesM15[State.candlesM15.length - 1] = parsedCandle;
-        }
-        
         const activeTf = State.timeframeMinutes === 15 ? 'M15' : 'M5';
-        if (tf === activeTf && State.candles.length > 0) {
+        if (tf === activeTf && State.candles.length > 0 && rawCandle) {
+            const parsedCandle = parseWSCandle(rawCandle);
             State.candles[State.candles.length - 1] = parsedCandle;
             
             // ⚡ PARTIAL TICK RENDER - NO FULL REDRAW!
@@ -4146,9 +4174,6 @@ function handleWebSocketMessage(data) {
     if (data.type === 'candle_close') {
         State.mt5Connected = true;
         updateConnectionStatus(true, 'MT5 Live');
-        
-        if (data.currentBid) State.currentBid = data.currentBid;
-        if (data.currentAsk) State.currentAsk = data.currentAsk;
         
         const tf = data.timeframe || 'M5';
         const closedCandle = data.closedCandle ? parseWSCandle(data.closedCandle) : null;
@@ -4171,6 +4196,14 @@ function handleWebSocketMessage(data) {
                 if (State.candlesM15.length > 300) State.candlesM15.shift();
             }
         }
+        
+        // If in Replay Mode, do not overwrite the active replay chart or current price panel
+        if (State.replayMode) {
+            return;
+        }
+        
+        if (data.currentBid) State.currentBid = data.currentBid;
+        if (data.currentAsk) State.currentAsk = data.currentAsk;
         
         const activeTf = State.timeframeMinutes === 15 ? 'M15' : 'M5';
         if (tf === activeTf) {
