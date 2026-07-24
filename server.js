@@ -46,7 +46,16 @@ app.post('/api/mt5-data', (req, res) => {
     try {
         const payload = req.body;
         handleMt5Payload(payload);
-        res.json({ status: 'ok', clientCount: wss ? wss.clients.size : 0 });
+        
+        const needM5 = state.candlesM5.length < 50;
+        const needM15 = state.candlesM15.length < 50;
+        
+        res.json({ 
+            status: 'ok', 
+            clientCount: wss ? wss.clients.size : 0,
+            needM5: needM5,
+            needM15: needM15
+        });
     } catch (err) {
         console.error('[Error] Invalid JSON from MT5 EA:', err.message);
         res.status(400).json({ status: 'error', message: err.message });

@@ -91,6 +91,25 @@ bool SendJsonPayload(string json, int timeoutMs = 12000)
       return false;
    }
    
+   // Self-healing check: reset initial sent flags if server requests a reload
+   string responseBody = CharArrayToString(resultData, 0, WHOLE_ARRAY, CP_UTF8);
+   if (StringFind(responseBody, "\"needM5\":true") >= 0)
+   {
+      if (g_initialM5Sent)
+      {
+         Print("🔄 Server requested M5 history reload...");
+         g_initialM5Sent = false;
+      }
+   }
+   if (StringFind(responseBody, "\"needM15\":true") >= 0)
+   {
+      if (g_initialM15Sent)
+      {
+         Print("🔄 Server requested M15 history reload...");
+         g_initialM15Sent = false;
+      }
+   }
+   
    return true;
 }
 

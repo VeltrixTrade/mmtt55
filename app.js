@@ -3866,8 +3866,8 @@ function finalizeInit() {
     updateTradingPanelUI();
     updatePositionsProfit();
     
-    // Force clean old service worker cache on first load of version 67
-    if (!localStorage.getItem('sw_migrated_v67')) {
+    // Force clean old service worker cache on first load of version 68
+    if (!localStorage.getItem('sw_migrated_v68')) {
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(registrations => {
                 for (let registration of registrations) {
@@ -3880,7 +3880,7 @@ function finalizeInit() {
                 for (let name of names) caches.delete(name);
             });
         }
-        localStorage.setItem('sw_migrated_v67', 'true');
+        localStorage.setItem('sw_migrated_v68', 'true');
         setTimeout(() => {
             window.location.reload(true); // Force reload to fetch everything fresh
         }, 200);
@@ -3889,7 +3889,7 @@ function finalizeInit() {
 
     // Register PWA Service Worker
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js?v=67')
+        navigator.serviceWorker.register('./sw.js?v=68')
             .then(() => console.log('PWA Service Worker Registered'))
             .catch(err => console.log('Service Worker Registration Failed:', err));
     }
@@ -4207,8 +4207,11 @@ function handleWebSocketMessage(data) {
         
         const activeTf = State.timeframeMinutes === 15 ? 'M15' : 'M5';
         if (tf === activeTf) {
-            State.candles = tf === 'M15' ? State.candlesM15 : State.candlesM5;
-            drawChart(); // Full redraw on candle close
+            const incoming = tf === 'M15' ? State.candlesM15 : State.candlesM5;
+            if (incoming && incoming.length > 5) {
+                State.candles = incoming;
+                drawChart(); // Full redraw on candle close
+            }
         }
         
         updateTradingPanelUI();
