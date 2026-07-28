@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mt5-simulator-v68';
+const CACHE_NAME = 'mt5-simulator-v71';
 const ASSETS = [
   './',
   './index.html',
@@ -6,7 +6,8 @@ const ASSETS = [
   './app.js',
   './manifest.json',
   './الشريط العلوي.JPG',
-  './الشريط السفلي.JPG',
+  './الشريط السفلي.PNG',
+  './الشريط السفلي اليلي.PNG',
   './الشارت.jpg',
   './M15.jpg',
   './public/icon-192.png',

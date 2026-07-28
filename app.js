@@ -2972,20 +2972,24 @@ document.getElementById('preset-tv').addEventListener('click', () => {
 function updateHeaderImages() {
     const mainHeaderImg = document.querySelector('.mt5-header-img');
     const tfOverlay = document.getElementById('header-tf-overlay');
+    const bottomNavImg = document.querySelector('.bottom-nav-img');
     const isM15 = State.timeframeMinutes === 15;
     
     if (State.isDarkMode) {
         if (tfOverlay) tfOverlay.classList.add('hidden');
         if (mainHeaderImg) {
             if (isM15) {
-                mainHeaderImg.src = 'وضع ليلي 15 دقيقة.jpg';
+                mainHeaderImg.src = 'وضع ليلي 15 دقيقة.jpg?v=71';
             } else {
-                mainHeaderImg.src = 'وضع ليلي 5 دقائق.jpg';
+                mainHeaderImg.src = 'وضع ليلي 5 دقائق.jpg?v=71';
             }
+        }
+        if (bottomNavImg) {
+            bottomNavImg.src = 'الشريط السفلي اليلي.PNG?v=71';
         }
     } else {
         if (mainHeaderImg) {
-            mainHeaderImg.src = 'الشريط العلوي.JPG';
+            mainHeaderImg.src = 'الشريط العلوي.JPG?v=71';
         }
         if (tfOverlay) {
             if (isM15) {
@@ -2993,6 +2997,9 @@ function updateHeaderImages() {
             } else {
                 tfOverlay.classList.add('hidden');
             }
+        }
+        if (bottomNavImg) {
+            bottomNavImg.src = 'الشريط السفلي.PNG?v=71';
         }
     }
 }
@@ -3866,8 +3873,8 @@ function finalizeInit() {
     updateTradingPanelUI();
     updatePositionsProfit();
     
-    // Force clean old service worker cache on first load of version 68
-    if (!localStorage.getItem('sw_migrated_v68')) {
+    // Force clean old service worker cache on first load of version 71
+    if (!localStorage.getItem('sw_migrated_v71')) {
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(registrations => {
                 for (let registration of registrations) {
@@ -3880,7 +3887,7 @@ function finalizeInit() {
                 for (let name of names) caches.delete(name);
             });
         }
-        localStorage.setItem('sw_migrated_v68', 'true');
+        localStorage.setItem('sw_migrated_v71', 'true');
         setTimeout(() => {
             window.location.reload(true); // Force reload to fetch everything fresh
         }, 200);
@@ -3889,7 +3896,7 @@ function finalizeInit() {
 
     // Register PWA Service Worker
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js?v=68')
+        navigator.serviceWorker.register('./sw.js?v=71')
             .then(() => console.log('PWA Service Worker Registered'))
             .catch(err => console.log('Service Worker Registration Failed:', err));
     }
