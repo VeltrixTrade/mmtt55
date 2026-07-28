@@ -2979,17 +2979,17 @@ function updateHeaderImages() {
         if (tfOverlay) tfOverlay.classList.add('hidden');
         if (mainHeaderImg) {
             if (isM15) {
-                mainHeaderImg.src = 'وضع ليلي 15 دقيقة.jpg?v=71';
+                mainHeaderImg.src = 'وضع ليلي 15 دقيقة.jpg?v=72';
             } else {
-                mainHeaderImg.src = 'وضع ليلي 5 دقائق.jpg?v=71';
+                mainHeaderImg.src = 'وضع ليلي 5 دقائق.jpg?v=72';
             }
         }
         if (bottomNavImg) {
-            bottomNavImg.src = 'الشريط السفلي اليلي.PNG?v=71';
+            bottomNavImg.src = 'الشريط السفلي اليلي.PNG?v=72';
         }
     } else {
         if (mainHeaderImg) {
-            mainHeaderImg.src = 'الشريط العلوي.JPG?v=71';
+            mainHeaderImg.src = 'الشريط العلوي.JPG?v=72';
         }
         if (tfOverlay) {
             if (isM15) {
@@ -2999,7 +2999,7 @@ function updateHeaderImages() {
             }
         }
         if (bottomNavImg) {
-            bottomNavImg.src = 'الشريط السفلي.PNG?v=71';
+            bottomNavImg.src = 'الشريط السفلي.PNG?v=72';
         }
     }
 }
@@ -3873,8 +3873,8 @@ function finalizeInit() {
     updateTradingPanelUI();
     updatePositionsProfit();
     
-    // Force clean old service worker cache on first load of version 71
-    if (!localStorage.getItem('sw_migrated_v71')) {
+    // Force clean old service worker cache on first load of version 72
+    if (!localStorage.getItem('sw_migrated_v72')) {
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(registrations => {
                 for (let registration of registrations) {
@@ -3887,7 +3887,7 @@ function finalizeInit() {
                 for (let name of names) caches.delete(name);
             });
         }
-        localStorage.setItem('sw_migrated_v71', 'true');
+        localStorage.setItem('sw_migrated_v72', 'true');
         setTimeout(() => {
             window.location.reload(true); // Force reload to fetch everything fresh
         }, 200);
@@ -3896,7 +3896,7 @@ function finalizeInit() {
 
     // Register PWA Service Worker
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js?v=71')
+        navigator.serviceWorker.register('./sw.js?v=72')
             .then(() => console.log('PWA Service Worker Registered'))
             .catch(err => console.log('Service Worker Registration Failed:', err));
     }
