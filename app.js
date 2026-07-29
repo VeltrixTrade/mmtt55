@@ -349,21 +349,39 @@ function getPriceRange(visibleCandles) {
     let max = -Infinity;
     
     visibleCandles.forEach(c => {
-        if (c.low < min) min = c.low;
-        if (c.high > max) max = c.high;
+        if (c && typeof c.low === 'number' && !isNaN(c.low) && c.low < min) min = c.low;
+        if (c && typeof c.high === 'number' && !isNaN(c.high) && c.high > max) max = c.high;
     });
     
-    State.positions.forEach(pos => {
-        if (pos.openPrice < min) min = pos.openPrice;
-        if (pos.openPrice > max) max = pos.openPrice;
-    });
+    // Only include position prices in the scale if they are within a reasonable distance from the candles
+    if (isFinite(min) && isFinite(max) && min < max) {
+        const candleDiff = max - min;
+        const threshold = Math.max(candleDiff * 5, 50.0); // Allow up to 5x the range or 50 points
+        
+        State.positions.forEach(pos => {
+            if (pos && typeof pos.openPrice === 'number' && !isNaN(pos.openPrice)) {
+                if (Math.abs(pos.openPrice - (min + max)/2) < threshold) {
+                    if (pos.openPrice < min) min = pos.openPrice;
+                    if (pos.openPrice > max) max = pos.openPrice;
+                }
+            }
+        });
+    }
     
     const diff = max - min;
     const padding = diff > 0 ? diff * 0.11 : 10;
     
+    let finalMin = min - padding;
+    let finalMax = max + padding;
+    
+    // Fallback safeguard if anything is NaN, Infinity, or invalid
+    if (!isFinite(finalMin) || !isFinite(finalMax) || isNaN(finalMin) || isNaN(finalMax) || finalMin >= finalMax) {
+        return { min: 4032.545, max: 4067.410 };
+    }
+    
     return {
-        min: min - padding,
-        max: max + padding
+        min: finalMin,
+        max: finalMax
     };
 }
 
@@ -2661,8 +2679,15 @@ document.querySelectorAll('.tf-option').forEach(option => {
                 console.error('Failed to cache aggregated candles:', e);
             }
         } else {
-            // Regenerate mock data for new timeframe
-            generateMockData();
+            // Live MT5 connection cache check before falling back to mock data
+            if (State.timeframeMinutes === 15 && State.candlesM15 && State.candlesM15.length > 5) {
+                State.candles = State.candlesM15;
+            } else if (State.timeframeMinutes === 5 && State.candlesM5 && State.candlesM5.length > 5) {
+                State.candles = State.candlesM5;
+            } else {
+                // Regenerate mock data for new timeframe
+                generateMockData();
+            }
         }
         
         drawChart();
@@ -2979,17 +3004,17 @@ function updateHeaderImages() {
         if (tfOverlay) tfOverlay.classList.add('hidden');
         if (mainHeaderImg) {
             if (isM15) {
-                mainHeaderImg.src = 'وضع ليلي 15 دقيقة.jpg?v=73';
+                mainHeaderImg.src = 'وضع ليلي 15 دقيقة.jpg?v=74';
             } else {
-                mainHeaderImg.src = 'وضع ليلي 5 دقائق.jpg?v=73';
+                mainHeaderImg.src = 'وضع ليلي 5 دقائق.jpg?v=74';
             }
         }
         if (bottomNavImg) {
-            bottomNavImg.src = 'الشريط السفلي اليلي.PNG?v=73';
+            bottomNavImg.src = 'الشريط السفلي اليلي.PNG?v=74';
         }
     } else {
         if (mainHeaderImg) {
-            mainHeaderImg.src = 'الشريط العلوي.JPG?v=73';
+            mainHeaderImg.src = 'الشريط العلوي.JPG?v=74';
         }
         if (tfOverlay) {
             if (isM15) {
@@ -2999,7 +3024,7 @@ function updateHeaderImages() {
             }
         }
         if (bottomNavImg) {
-            bottomNavImg.src = 'الشريط السفلي.PNG?v=73';
+            bottomNavImg.src = 'الشريط السفلي.PNG?v=74';
         }
     }
 }
@@ -3873,9 +3898,9 @@ function finalizeInit() {
     updateTradingPanelUI();
     updatePositionsProfit();
     
-    // Force clean old service worker cache on first load of version 73
+    // Force clean old service worker cache on first load of version 74
     try {
-        if (!localStorage.getItem('sw_migrated_v73')) {
+        if (!localStorage.getItem('sw_migrated_v74')) {
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.getRegistrations().then(registrations => {
                     for (let registration of registrations) {
@@ -3890,7 +3915,7 @@ function finalizeInit() {
                     }
                 }).catch(e => console.warn(e));
             }
-            localStorage.setItem('sw_migrated_v73', 'true');
+            localStorage.setItem('sw_migrated_v74', 'true');
             setTimeout(() => {
                 try {
                     window.location.reload(); // Standard safe reload
@@ -3907,7 +3932,7 @@ function finalizeInit() {
     // Register PWA Service Worker
     if ('serviceWorker' in navigator && window.location.protocol !== 'file:') {
         try {
-            navigator.serviceWorker.register('./sw.js?v=73')
+            navigator.serviceWorker.register('./sw.js?v=74')
                 .then(() => console.log('PWA Service Worker Registered'))
                 .catch(err => console.log('Service Worker Registration Failed:', err));
         } catch (e) {
