@@ -17,9 +17,30 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Lato:wght@400;700&family=Montserrat:wght@400;500;700&family=Open+Sans:wght@400;600&family=Outfit:wght@400;500;700&family=Poppins:wght@400;500;600&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="styles.css?v=72">
+    <link rel="stylesheet" href="styles.css?v=73">
 </head>
 <body>
+    <!-- Global error catcher to display any mobile browser javascript crash on screen -->
+    <script>
+        window.addEventListener('error', function(e) {
+            const errDiv = document.createElement('div');
+            errDiv.style.position = 'fixed';
+            errDiv.style.top = '10px';
+            errDiv.style.left = '10px';
+            errDiv.style.right = '10px';
+            errDiv.style.background = 'rgba(255, 59, 48, 0.95)';
+            errDiv.style.color = '#ffffff';
+            errDiv.style.padding = '15px';
+            errDiv.style.borderRadius = '10px';
+            errDiv.style.fontSize = '12px';
+            errDiv.style.fontFamily = 'monospace';
+            errDiv.style.zIndex = '9999999';
+            errDiv.style.boxShadow = '0 8px 24px rgba(0,0,0,0.4)';
+            errDiv.innerHTML = '<strong style="font-size:14px;">خطأ برمجي (JS Error):</strong><br>' + 
+                               e.message + '<br><small>in ' + e.filename + ':' + e.lineno + '</small>';
+            document.body.appendChild(errDiv);
+        });
+    </script>
     <div class="iphone-frame">
         <div class="iphone-screen">
             <!-- iOS Top Status Bar Spacer (47px height) -->
@@ -794,6 +815,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=72"></script>
+    <script src="app.js?v=73"></script>
 </body>
 </html>
