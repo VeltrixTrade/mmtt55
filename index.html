@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Lato:wght@400;700&family=Montserrat:wght@400;500;700&family=Open+Sans:wght@400;600&family=Outfit:wght@400;500;700&family=Poppins:wght@400;500;600&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="styles.css?v=74">
+    <link rel="stylesheet" href="styles.css?v=82">
 </head>
 <body>
     <!-- Global error catcher to display any mobile browser javascript crash on screen -->
@@ -254,32 +254,74 @@
                     </div>
                 </div>
 
-                <!-- Trade Page (Hidden by default) -->
+                <!-- Trade Page (MT5 Mobile Style) -->
                 <div class="page hidden" id="page-trade">
-                    <div class="page-header" style="position: relative; display: flex; align-items: center; justify-content: space-between; padding: 0 16px;">
-                        <span>تداول (Trade)</span>
-                        <div id="connection-status-badge" style="font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 10px; display: flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.55); color: #e5e5e7; backdrop-filter: blur(4px);">
-                            <span id="conn-dot" style="width: 6px; height: 6px; border-radius: 50%; background-color: #ff3b30; display: inline-block;"></span>
-                            <span id="conn-text">Disconnected</span>
+                    <!-- MT5 Mobile Trade Top Header -->
+                    <div class="trade-header">
+                        <button class="trade-header-btn trade-header-plus-btn" id="trade-new-order-btn" title="صفقة جديدة">
+                            <img src="الشريط العلوي في صفحة التداول جهة اليسار .png" alt="+" class="trade-header-btn-img">
+                        </button>
+                        <div class="trade-header-title" id="trade-header-title">USD</div>
+                        <button class="trade-header-btn trade-header-card-btn" id="trade-account-card-btn" title="تفاصيل الحساب">
+                            <img src="الشريط العلوي في صفحة التداول.png" alt="الحساب" class="trade-header-btn-img">
+                        </button>
+                    </div>
+
+                    <!-- Scrollable Trade Body -->
+                    <div class="page-scrollable trade-scrollable">
+                        <!-- Account Metrics Summary -->
+                        <div class="trade-account-summary">
+                            <div class="trade-account-row">
+                                <span class="trade-row-label">رصيد الحساب:</span>
+                                <span class="trade-row-val" id="trade-balance-val">0.00</span>
+                            </div>
+                            <div class="trade-account-row">
+                                <span class="trade-row-label">راس المال المتوفر:</span>
+                                <span class="trade-row-val" id="trade-equity-val">0.00</span>
+                            </div>
+                            <div class="trade-account-row" id="trade-margin-row" style="display: none;">
+                                <span class="trade-row-label">الهامش:</span>
+                                <span class="trade-row-val" id="trade-margin-val">0.00</span>
+                            </div>
+                            <div class="trade-account-row">
+                                <span class="trade-row-label">هامش الحرية:</span>
+                                <span class="trade-row-val" id="trade-margin-free-val">0.00</span>
+                            </div>
+                            <div class="trade-account-row" id="trade-margin-level-row" style="display: none;">
+                                <span class="trade-row-label">مستوى الهامش (%):</span>
+                                <span class="trade-row-val" id="trade-margin-level-val">0.00</span>
+                            </div>
+                        </div>
+
+                        <!-- Empty State: MT5 Trending Chart Icon in Center -->
+                        <div class="trade-empty-state" id="trade-empty-state">
+                            <img src="العلامة التي في المنتصف في صفحة التداول.png" alt="MT5 Trade" class="trade-empty-img">
+                        </div>
+
+                        <!-- Open Positions Wrapper -->
+                        <div class="trade-positions-wrapper" id="trade-positions-wrapper" style="display: none;">
+                            <!-- Section Bar: ملصق المراكز في صفحة التداول -->
+                            <div class="trade-positions-bar">
+                                <img src="ملصق المراكز في صفحة التداول .png" alt="مراكز" class="trade-positions-bar-img">
+                            </div>
+
+                            <!-- Positions List Container -->
+                            <div class="positions-list" id="positions-list-container"></div>
                         </div>
                     </div>
-                    <div class="page-scrollable">
-                        <div class="balance-card">
-                            <div class="balance-row">
-                                <span>الرصيد:</span>
-                                <span id="balance-val">$10,000.00</span>
+
+                    <!-- Trade Position Action Sheet (MT5 Mobile Style) -->
+                    <div class="trade-action-sheet-overlay hidden" id="trade-action-sheet-overlay">
+                        <div class="trade-action-sheet" id="trade-action-sheet">
+                            <div class="trade-sheet-header">
+                                <div class="trade-sheet-title" id="trade-sheet-title">XAUUSD.s, buy 0.2</div>
+                                <div class="trade-sheet-sub" id="trade-sheet-sub">4346.50 &larr; 3651.72</div>
                             </div>
-                            <div class="balance-row">
-                                <span>حقوق الملكية (Equity):</span>
-                                <span id="equity-val">$10,000.00</span>
+                            <div class="trade-sheet-actions">
+                                <button class="trade-sheet-btn danger" id="trade-sheet-close-btn">إغلاق المركز</button>
+                                <button class="trade-sheet-btn" id="trade-sheet-chart-btn">الرسم البياني</button>
+                                <button class="trade-sheet-btn cancel" id="trade-sheet-cancel-btn">إلغاء</button>
                             </div>
-                            <div class="balance-row">
-                                <span>الهامش المتاح:</span>
-                                <span id="margin-free-val">$10,000.00</span>
-                            </div>
-                        </div>
-                        <div class="positions-list" id="positions-list-container">
-                            <div class="no-positions">لا توجد صفقات مفتوحة حالياً.</div>
                         </div>
                     </div>
                 </div>
@@ -438,6 +480,97 @@
                             <div class="settings-item">
                                 <span>عرض/مقياس أرقام الأسعار أفقياً</span>
                                 <input type="number" id="setting-prices-scale-x" value="1.0" step="any" style="width: 60px; text-align: center;">
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <div class="settings-title">تخصيص ملصقات وخطوط تبويب التداول (Trade Tab Full Customization)</div>
+                            
+                            <!-- 1. أحجام الملصقات والأيقونات -->
+                            <div class="settings-item">
+                                <span>حجم ملصقات الشريط العلوي (زر + وبطاقة الحساب)</span>
+                                <input type="number" id="setting-trade-header-btn-size" value="38" step="1" style="width: 60px; text-align: center;">
+                            </div>
+                            <div class="settings-item">
+                                <span>حجم علامة المنتصف (سهم ترند MT5)</span>
+                                <input type="number" id="setting-trade-center-icon-size" value="135" step="5" style="width: 60px; text-align: center;">
+                            </div>
+                            <div class="settings-item">
+                                <span>ارتفاع ملصق شريط المراكز (مراكز •••)</span>
+                                <input type="number" id="setting-trade-positions-bar-height" value="34" step="1" style="width: 60px; text-align: center;">
+                            </div>
+
+                            <!-- 2. خطوط الكلمات والنصوص -->
+                            <div class="settings-item" style="flex-direction: column; align-items: stretch; gap: 4px; margin-top: 5px;">
+                                <span>نوع خط الكلمات والنصوص (Text Font Family)</span>
+                                <select id="setting-trade-font-family" class="settings-select">
+                                    <option value='-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", sans-serif' selected>SF Pro (MT5 الافتراضي)</option>
+                                    <option value='"Helvetica Neue", Helvetica, sans-serif'>Helvetica Neue (أبل)</option>
+                                    <option value='"Inter", sans-serif'>Inter (حديث ونقي)</option>
+                                    <option value='"Outfit", sans-serif'>Outfit (أنيق)</option>
+                                    <option value='"Poppins", sans-serif'>Poppins (دائري)</option>
+                                    <option value='"Roboto", sans-serif'>Roboto (أندرويد)</option>
+                                    <option value='"Montserrat", sans-serif'>Montserrat</option>
+                                    <option value='"Open Sans", sans-serif'>Open Sans</option>
+                                    <option value='"Lato", sans-serif'>Lato</option>
+                                    <option value='"Segoe UI", sans-serif'>Segoe UI (ويندوز)</option>
+                                    <option value='"Arial", sans-serif'>Arial (كلاسيكي)</option>
+                                    <option value='system-ui'>خط النظام الافتراضي (System Default)</option>
+                                </select>
+                            </div>
+                            <div class="settings-item" style="flex-direction: column; align-items: stretch; gap: 4px;">
+                                <span>سماكة خط الكلمات والنصوص (Text Weight)</span>
+                                <select id="setting-trade-font-weight-text" class="settings-select">
+                                    <option value="400">400 (عادي - Regular)</option>
+                                    <option value="500" selected>500 (متوسط - Medium)</option>
+                                    <option value="600">600 (شبه عريض - SemiBold)</option>
+                                    <option value="700">700 (عريض - Bold)</option>
+                                </select>
+                            </div>
+
+                            <!-- 3. خطوط الأرقام والأسعار -->
+                            <div class="settings-item" style="flex-direction: column; align-items: stretch; gap: 4px; margin-top: 5px;">
+                                <span>نوع خط الأرقام والأسعار (Numbers Font Family)</span>
+                                <select id="setting-trade-font-numbers" class="settings-select">
+                                    <option value='-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", sans-serif' selected>SF Pro Tabular (MT5 الأصلي)</option>
+                                    <option value='"Helvetica Neue", Helvetica, sans-serif'>Helvetica Neue</option>
+                                    <option value='"Inter", sans-serif'>Inter Numbers</option>
+                                    <option value='"Roboto", sans-serif'>Roboto Numbers</option>
+                                    <option value='"Courier New", monospace'>Monospace (رقمي دقيق)</option>
+                                    <option value='"Arial", sans-serif'>Arial Numbers</option>
+                                </select>
+                            </div>
+                            <div class="settings-item" style="flex-direction: column; align-items: stretch; gap: 4px;">
+                                <span>سماكة خط الأرقام والأسعار (Numbers Weight)</span>
+                                <select id="setting-trade-font-weight-numbers" class="settings-select">
+                                    <option value="400">400 (عادي - Regular)</option>
+                                    <option value="500">500 (متوسط - Medium)</option>
+                                    <option value="600" selected>600 (شبه عريض - SemiBold)</option>
+                                    <option value="700">700 (عريض - Bold)</option>
+                                    <option value="800">800 (سميك جداً - ExtraBold)</option>
+                                </select>
+                            </div>
+                            <div class="settings-item">
+                                <span>تباعد أرقام وأسعار الصفقات (px)</span>
+                                <input type="number" id="setting-trade-numbers-spacing" value="0" step="0.2" style="width: 60px; text-align: center;">
+                            </div>
+
+                            <!-- 4. أحجام الخطوط -->
+                            <div class="settings-item">
+                                <span>حجم خط أرقام الربح/الخسارة (P/L Size)</span>
+                                <input type="number" id="setting-trade-font-size-profit" value="19" step="any" style="width: 60px; text-align: center;">
+                            </div>
+                            <div class="settings-item">
+                                <span>حجم خط أرقام ونصوص الحساب العلوية</span>
+                                <input type="number" id="setting-trade-font-size-account" value="14" step="any" style="width: 60px; text-align: center;">
+                            </div>
+                            <div class="settings-item">
+                                <span>حجم خط رمز وعقد الصفقة (XAUUSD.s / Lot)</span>
+                                <input type="number" id="setting-trade-font-size-symbol" value="14.5" step="any" style="width: 60px; text-align: center;">
+                            </div>
+                            <div class="settings-item">
+                                <span>حجم خط أسعار دخول وإغلاق الصفقة</span>
+                                <input type="number" id="setting-trade-font-size-prices" value="12.5" step="any" style="width: 60px; text-align: center;">
                             </div>
                         </div>
 
@@ -815,6 +948,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=74"></script>
+    <script src="app.js?v=82"></script>
 </body>
 </html>

@@ -27,7 +27,11 @@ const State = {
     // Trading Account State
     balance: 10000.00,
     equity: 10000.00,
+    usedMargin: 0.00,
     marginFree: 10000.00,
+    marginLevel: 0.00,
+    totalProfit: 0.00,
+    leverage: 200,     // MT5 Account Leverage 1:200
     positions: [],
     history: [],
     currentLot: 0.01,
@@ -124,6 +128,20 @@ const State = {
     weightLabels: localStorage.getItem('mt5_weight_labels') || '400',
     weightPrices: localStorage.getItem('mt5_weight_prices') || '450',
     weightTime: localStorage.getItem('mt5_weight_time') || '400',
+    
+    // Trade Tab Typography & Stickers Customizations
+    tradeHeaderBtnSize: parseFloat(localStorage.getItem('mt5_trade_header_btn_size')) || 38,
+    tradeCenterIconSize: parseFloat(localStorage.getItem('mt5_trade_center_icon_size')) || 135,
+    tradePositionsBarHeight: parseFloat(localStorage.getItem('mt5_trade_positions_bar_height')) || 34,
+    tradeFontFamily: localStorage.getItem('mt5_trade_font_family') || '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", sans-serif',
+    tradeFontNumbers: localStorage.getItem('mt5_trade_font_numbers') || '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", sans-serif',
+    tradeFontWeightText: localStorage.getItem('mt5_trade_font_weight_text') || '500',
+    tradeFontWeightNumbers: localStorage.getItem('mt5_trade_font_weight_numbers') || '600',
+    tradeNumbersSpacing: parseFloat(localStorage.getItem('mt5_trade_numbers_spacing')) || 0,
+    tradeFontSizeProfit: parseFloat(localStorage.getItem('mt5_trade_font_size_profit')) || 19,
+    tradeFontSizeAccount: parseFloat(localStorage.getItem('mt5_trade_font_size_account')) || 14,
+    tradeFontSizeSymbol: parseFloat(localStorage.getItem('mt5_trade_font_size_symbol')) || 14.5,
+    tradeFontSizePrices: parseFloat(localStorage.getItem('mt5_trade_font_size_prices')) || 12.5,
     
     colorBuyLabel: localStorage.getItem('mt5_color_buy_label') || '#3C81FF',
     colorBuyText: localStorage.getItem('mt5_color_buy_text') || '#3C81FF',
@@ -2349,31 +2367,41 @@ function placeOrder(type) {
     switchPage('page-chart');
 }
 
+function formatFinancial(val, decimals = 2) {
+    if (val === undefined || val === null || isNaN(val)) return '0.00';
+    return Number(val).toLocaleString('en-US', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+    });
+}
+
 function updatePositionsProfit() {
-    const currentPrice = State.currentBid;
     let totalProfit = 0;
+    let totalUsedMargin = 0;
+    const leverage = State.leverage || 200;
+    const contractSize = State.contractSize || 100;
     
     State.positions.forEach(pos => {
+        const closePrice = pos.type === 'BUY' ? State.currentBid : State.currentAsk;
         if (pos.type === 'BUY') {
-            pos.profit = (State.currentBid - pos.openPrice) * pos.lot * State.contractSize;
+            pos.profit = (closePrice - pos.openPrice) * pos.lot * contractSize;
         } else {
-            pos.profit = (pos.openPrice - State.currentAsk) * pos.lot * State.contractSize;
+            pos.profit = (pos.openPrice - closePrice) * pos.lot * contractSize;
         }
+        // MT5 Used Margin = (Lots * Contract Size * Open Price) / Leverage
+        pos.margin = (pos.lot * contractSize * pos.openPrice) / leverage;
+        
         totalProfit += pos.profit;
+        totalUsedMargin += pos.margin;
     });
     
+    State.totalProfit = totalProfit;
+    State.usedMargin = totalUsedMargin;
     State.equity = State.balance + totalProfit;
-    State.marginFree = State.equity;
+    State.marginFree = State.equity - totalUsedMargin;
+    State.marginLevel = totalUsedMargin > 0 ? (State.equity / totalUsedMargin) * 100 : 0;
     
-    balanceValEl.textContent = `$${State.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    equityValEl.textContent = `$${State.equity.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    marginFreeValEl.textContent = `$${State.marginFree.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    
-    if (totalProfit >= 0) {
-        equityValEl.style.color = '#2e7d32';
-    } else {
-        equityValEl.style.color = varColor('--mt5-red', '#e53935');
-    }
+    updateTradeTabUI();
 }
 
 function closePosition(posId) {
@@ -2408,43 +2436,129 @@ function closePosition(posId) {
     });
     
     updatePositionsProfit();
-    updateTradeTabUI();
     updateHistoryTabUI();
     drawChart();
 }
 
+let selectedTradePosId = null;
+
 function updateTradeTabUI() {
-    positionsListContainer.innerHTML = '';
+    const balanceEl = document.getElementById('trade-balance-val');
+    const equityEl = document.getElementById('trade-equity-val');
+    const marginEl = document.getElementById('trade-margin-val');
+    const marginFreeEl = document.getElementById('trade-margin-free-val');
+    const marginLevelEl = document.getElementById('trade-margin-level-val');
+    const marginRow = document.getElementById('trade-margin-row');
+    const marginLevelRow = document.getElementById('trade-margin-level-row');
+    const headerTitleEl = document.getElementById('trade-header-title');
+    const emptyStateEl = document.getElementById('trade-empty-state');
+    const positionsWrapper = document.getElementById('trade-positions-wrapper');
+    const listContainer = document.getElementById('positions-list-container');
     
-    if (State.positions.length === 0) {
-        positionsListContainer.innerHTML = '<div class="no-positions">لا توجد صفقات مفتوحة حالياً.</div>';
+    if (!balanceEl) return;
+    
+    const hasPositions = State.positions.length > 0;
+    
+    if (!hasPositions) {
+        // CASE 1: No open positions (MT5 Empty State)
+        const displayVal = formatFinancial(State.balance);
+        balanceEl.textContent = displayVal;
+        equityEl.textContent = displayVal;
+        marginFreeEl.textContent = displayVal;
+        
+        if (marginRow) marginRow.style.display = 'none';
+        if (marginLevelRow) marginLevelRow.style.display = 'none';
+        
+        if (headerTitleEl) {
+            headerTitleEl.textContent = 'USD';
+            headerTitleEl.className = 'trade-header-title';
+        }
+        
+        if (emptyStateEl) emptyStateEl.style.display = 'flex';
+        if (positionsWrapper) positionsWrapper.style.display = 'none';
+        if (listContainer) listContainer.innerHTML = '';
         return;
     }
     
-    State.positions.forEach(pos => {
-        const item = document.createElement('div');
-        item.className = 'position-item';
-        
-        const isProfit = pos.profit >= 0;
-        const profitClass = isProfit ? 'profit' : 'loss';
-        const typeClass = pos.type.toLowerCase();
-        
-        item.innerHTML = `
-            <div class="pos-header">
-                <div>
-                    <span class="pos-symbol">XAUUSD</span>
-                    <span class="pos-type-lot ${typeClass}">${pos.type === 'BUY' ? 'شراء' : 'بيع'} ${pos.lot.toFixed(2)}</span>
+    // CASE 2: Positions are open (Live MT5 Active State)
+    balanceEl.textContent = formatFinancial(State.balance);
+    equityEl.textContent = formatFinancial(State.equity);
+    if (marginEl) marginEl.textContent = formatFinancial(State.usedMargin);
+    if (marginFreeEl) marginFreeEl.textContent = formatFinancial(State.marginFree);
+    if (marginLevelEl) marginLevelEl.textContent = formatFinancial(State.marginLevel);
+    
+    if (marginRow) marginRow.style.display = 'flex';
+    if (marginLevelRow) marginLevelRow.style.display = 'flex';
+    
+    if (headerTitleEl) {
+        const totalProfit = State.totalProfit || 0;
+        headerTitleEl.textContent = `${formatFinancial(totalProfit)} USD`;
+        headerTitleEl.className = 'trade-header-title ' + (totalProfit >= 0 ? 'profit' : 'loss');
+    }
+    
+    if (emptyStateEl) emptyStateEl.style.display = 'none';
+    if (positionsWrapper) positionsWrapper.style.display = 'block';
+    
+    if (listContainer) {
+        listContainer.innerHTML = '';
+        State.positions.forEach(pos => {
+            const currentClosePrice = pos.type === 'BUY' ? State.currentBid : State.currentAsk;
+            const isProfit = pos.profit >= 0;
+            const profitStr = formatFinancial(pos.profit);
+            const sideClass = pos.type.toLowerCase();
+            const symbolDisplay = 'XAUUSD.s';
+            
+            const row = document.createElement('div');
+            row.className = 'trade-pos-row';
+            row.dataset.id = pos.id;
+            
+            row.innerHTML = `
+                <div class="trade-pos-profit ${isProfit ? 'profit' : 'loss'}">
+                    ${profitStr}
                 </div>
-                <div class="pos-profit ${profitClass}">${pos.profit >= 0 ? '+' : ''}${pos.profit.toFixed(2)} USD</div>
-            </div>
-            <div class="pos-details">
-                <span>سعر الدخول: ${pos.openPrice.toFixed(2)}</span>
-                <span>السعر الحالي: ${State.currentBid.toFixed(2)}</span>
-            </div>
-            <button class="close-btn" onclick="closePosition('${pos.id}')">إغلاق الصفقة</button>
-        `;
-        positionsListContainer.appendChild(item);
-    });
+                <div class="trade-pos-info">
+                    <div class="trade-pos-header-line">
+                        <span class="trade-pos-symbol">${symbolDisplay}</span>
+                        <span class="trade-pos-side ${sideClass}">${sideClass}</span>
+                        <span class="trade-pos-volume">${pos.lot.toFixed(pos.lot % 1 === 0 ? 1 : 2)}</span>
+                    </div>
+                    <div class="trade-pos-prices">
+                        ${currentClosePrice.toFixed(2)} &larr; ${pos.openPrice.toFixed(2)}
+                    </div>
+                </div>
+            `;
+            
+            row.addEventListener('click', () => {
+                openTradeActionSheet(pos);
+            });
+            
+            listContainer.appendChild(row);
+        });
+    }
+}
+
+function openTradeActionSheet(pos) {
+    selectedTradePosId = pos.id;
+    const overlay = document.getElementById('trade-action-sheet-overlay');
+    const titleEl = document.getElementById('trade-sheet-title');
+    const subEl = document.getElementById('trade-sheet-sub');
+    if (!overlay) return;
+    
+    const currentClosePrice = pos.type === 'BUY' ? State.currentBid : State.currentAsk;
+    if (titleEl) {
+        titleEl.textContent = `XAUUSD.s, ${pos.type.toLowerCase()} ${pos.lot.toFixed(2)}`;
+    }
+    if (subEl) {
+        subEl.innerHTML = `${currentClosePrice.toFixed(2)} &larr; ${pos.openPrice.toFixed(2)}`;
+    }
+    
+    overlay.classList.remove('hidden');
+}
+
+function closeTradeActionSheet() {
+    const overlay = document.getElementById('trade-action-sheet-overlay');
+    if (overlay) overlay.classList.add('hidden');
+    selectedTradePosId = null;
 }
 
 function updateHistoryTabUI() {
@@ -2517,32 +2631,50 @@ function switchPage(targetPageId) {
         }
     });
     
-    // Update bottom nav visual tab indicator overlays
+    // Hide MT5 top chart toolbar when navigating to non-chart tabs
+    const mt5Header = document.querySelector('.mt5-header-container');
+    if (mt5Header) {
+        mt5Header.style.display = (targetPageId === 'page-chart') ? '' : 'none';
+    }
+    
+    const bottomNavImg = document.querySelector('.bottom-nav-img');
     const maskChartGrey = document.getElementById('nav-mask-chart-grey');
     const tintActive = document.getElementById('nav-tint-active');
     
-    if (maskChartGrey && tintActive) {
-        if (targetPageId === 'page-chart') {
-            // Chart page is active: no masks/tints needed (default image is correct)
-            maskChartGrey.classList.remove('active');
-            tintActive.classList.remove('active');
-        } else {
-            // Other page is active: make chart tab grey, and tint the active tab blue
-            maskChartGrey.classList.add('active');
-            tintActive.classList.add('active');
-            
-            // Position the blue tint over the active tab column
-            // Columns from right to left: Quotes (0), Chart (1), Trade (2), History (3), Settings (4)
-            let columnIdx = 1; // default to chart
-            if (targetPageId === 'page-quotes') columnIdx = 0;
-            else if (targetPageId === 'page-trade') columnIdx = 2;
-            else if (targetPageId === 'page-history') columnIdx = 3;
-            else if (targetPageId === 'page-settings') columnIdx = 4;
-            
-            tintActive.style.right = `${columnIdx * 20}%`;
+    if (targetPageId === 'page-trade') {
+        document.body.classList.add('trade-tab-active');
+        // Trade tab: use exact MT5 sliced image for trade bottom bar
+        if (bottomNavImg) {
+            bottomNavImg.src = 'الشريط السفلي عند التنقل الى صفحة التداول.PNG?v=82';
+        }
+        if (maskChartGrey) maskChartGrey.classList.remove('active');
+        if (tintActive) tintActive.classList.remove('active');
+        applyTradeFontSettings();
+        updateTradeTabUI();
+    } else {
+        document.body.classList.remove('trade-tab-active');
+        // Other tabs: restore default bottom nav image
+        if (bottomNavImg) {
+            bottomNavImg.src = State.isDarkMode ? 'الشريط السفلي اليلي.PNG?v=82' : 'الشريط السفلي.PNG?v=82';
+        }
+        
+        if (maskChartGrey && tintActive) {
+            if (targetPageId === 'page-chart') {
+                maskChartGrey.classList.remove('active');
+                tintActive.classList.remove('active');
+            } else {
+                maskChartGrey.classList.add('active');
+                tintActive.classList.add('active');
+                
+                let columnIdx = 1;
+                if (targetPageId === 'page-quotes') columnIdx = 0;
+                else if (targetPageId === 'page-history') columnIdx = 3;
+                else if (targetPageId === 'page-settings') columnIdx = 4;
+                
+                tintActive.style.right = `${columnIdx * 20}%`;
+            }
         }
     }
-    
 
     if (targetPageId === 'page-chart') {
         setTimeout(resizeCanvas, 50);
@@ -2555,6 +2687,58 @@ document.getElementById('nav-chart').addEventListener('click', () => switchPage(
 document.getElementById('nav-trade').addEventListener('click', () => switchPage('page-trade'));
 document.getElementById('nav-history').addEventListener('click', () => switchPage('page-history'));
 document.getElementById('nav-settings').addEventListener('click', () => switchPage('page-settings'));
+
+// Trade Header Buttons & Action Sheet Listeners
+const tradeNewOrderBtn = document.getElementById('trade-new-order-btn');
+if (tradeNewOrderBtn) {
+    tradeNewOrderBtn.addEventListener('click', () => {
+        switchPage('page-chart');
+        if (oneClickPanel && oneClickPanel.classList.contains('hidden')) {
+            oneClickPanel.classList.remove('hidden');
+            setTimeout(resizeCanvas, 150);
+        }
+    });
+}
+
+const tradeAccountCardBtn = document.getElementById('trade-account-card-btn');
+if (tradeAccountCardBtn) {
+    tradeAccountCardBtn.addEventListener('click', () => {
+        alert(`معلومات الحساب (MT5 Demo)\nالحساب: 5892104\nالرافعة المالية: 1:${State.leverage || 200}\nالعملة: USD\nالرمز النشط: XAUUSD (Gold)`);
+    });
+}
+
+const tradeSheetOverlay = document.getElementById('trade-action-sheet-overlay');
+const tradeSheetCloseBtn = document.getElementById('trade-sheet-close-btn');
+const tradeSheetChartBtn = document.getElementById('trade-sheet-chart-btn');
+const tradeSheetCancelBtn = document.getElementById('trade-sheet-cancel-btn');
+
+if (tradeSheetCloseBtn) {
+    tradeSheetCloseBtn.addEventListener('click', () => {
+        if (selectedTradePosId) {
+            closePosition(selectedTradePosId);
+            closeTradeActionSheet();
+        }
+    });
+}
+
+if (tradeSheetChartBtn) {
+    tradeSheetChartBtn.addEventListener('click', () => {
+        closeTradeActionSheet();
+        switchPage('page-chart');
+    });
+}
+
+if (tradeSheetCancelBtn) {
+    tradeSheetCancelBtn.addEventListener('click', closeTradeActionSheet);
+}
+
+if (tradeSheetOverlay) {
+    tradeSheetOverlay.addEventListener('click', (e) => {
+        if (e.target === tradeSheetOverlay) {
+            closeTradeActionSheet();
+        }
+    });
+}
 
 // Image overlay click listeners mapping top toolbar buttons
 document.getElementById('quick-trade-toggle-btn').addEventListener('click', () => {
@@ -3283,8 +3467,38 @@ const advancedSettings = {
     'setting-color-sell-text': { key: 'colorSellText', type: 'string', storage: 'mt5_color_sell_text' },
     'setting-color-subtitle': { key: 'colorSubtitle', type: 'string', storage: 'mt5_color_subtitle' },
     // Drawing Tools
-    'setting-arrow-style': { key: 'arrowStyle', type: 'string', storage: 'mt5_arrow_style' }
+    'setting-arrow-style': { key: 'arrowStyle', type: 'string', storage: 'mt5_arrow_style' },
+    // Trade Tab Typography & Stickers Customizations
+    'setting-trade-header-btn-size': { key: 'tradeHeaderBtnSize', type: 'float', storage: 'mt5_trade_header_btn_size' },
+    'setting-trade-center-icon-size': { key: 'tradeCenterIconSize', type: 'float', storage: 'mt5_trade_center_icon_size' },
+    'setting-trade-positions-bar-height': { key: 'tradePositionsBarHeight', type: 'float', storage: 'mt5_trade_positions_bar_height' },
+    'setting-trade-font-family': { key: 'tradeFontFamily', type: 'string', storage: 'mt5_trade_font_family' },
+    'setting-trade-font-numbers': { key: 'tradeFontNumbers', type: 'string', storage: 'mt5_trade_font_numbers' },
+    'setting-trade-font-weight-text': { key: 'tradeFontWeightText', type: 'string', storage: 'mt5_trade_font_weight_text' },
+    'setting-trade-font-weight-numbers': { key: 'tradeFontWeightNumbers', type: 'string', storage: 'mt5_trade_font_weight_numbers' },
+    'setting-trade-numbers-spacing': { key: 'tradeNumbersSpacing', type: 'float', storage: 'mt5_trade_numbers_spacing' },
+    'setting-trade-font-size-profit': { key: 'tradeFontSizeProfit', type: 'float', storage: 'mt5_trade_font_size_profit' },
+    'setting-trade-font-size-account': { key: 'tradeFontSizeAccount', type: 'float', storage: 'mt5_trade_font_size_account' },
+    'setting-trade-font-size-symbol': { key: 'tradeFontSizeSymbol', type: 'float', storage: 'mt5_trade_font_size_symbol' },
+    'setting-trade-font-size-prices': { key: 'tradeFontSizePrices', type: 'float', storage: 'mt5_trade_font_size_prices' }
 };
+
+function applyTradeFontSettings() {
+    const tradePage = document.getElementById('page-trade');
+    if (!tradePage) return;
+    tradePage.style.setProperty('--trade-header-btn-size', `${State.tradeHeaderBtnSize || 38}px`);
+    tradePage.style.setProperty('--trade-center-icon-size', `${State.tradeCenterIconSize || 135}px`);
+    tradePage.style.setProperty('--trade-positions-bar-height', `${State.tradePositionsBarHeight || 34}px`);
+    tradePage.style.setProperty('--trade-font-family', State.tradeFontFamily || '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", sans-serif');
+    tradePage.style.setProperty('--trade-font-numbers', State.tradeFontNumbers || '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", sans-serif');
+    tradePage.style.setProperty('--trade-font-weight-text', State.tradeFontWeightText || '500');
+    tradePage.style.setProperty('--trade-font-weight-numbers', State.tradeFontWeightNumbers || '600');
+    tradePage.style.setProperty('--trade-numbers-spacing', `${State.tradeNumbersSpacing || 0}px`);
+    tradePage.style.setProperty('--trade-font-size-profit', `${State.tradeFontSizeProfit || 19}px`);
+    tradePage.style.setProperty('--trade-font-size-account', `${State.tradeFontSizeAccount || 14}px`);
+    tradePage.style.setProperty('--trade-font-size-symbol', `${State.tradeFontSizeSymbol || 14.5}px`);
+    tradePage.style.setProperty('--trade-font-size-prices', `${State.tradeFontSizePrices || 12.5}px`);
+}
 
 function initAdvancedSettings() {
     Object.keys(advancedSettings).forEach(id => {
@@ -3307,10 +3521,12 @@ function initAdvancedSettings() {
             State[config.key] = val;
             localStorage.setItem(config.storage, val);
             applySubtitleColor();
+            applyTradeFontSettings();
             drawChart();
         });
     });
     applySubtitleColor();
+    applyTradeFontSettings();
 }
 
 // Bind Save and Reset Customizations button actions (wrapped in checks to prevent crashes on cached layouts)
@@ -3406,6 +3622,18 @@ if (resetCustomizationsBtn) {
     localStorage.removeItem('mt5_time_right_margin');
     localStorage.removeItem('mt5_three_dots_x');
     localStorage.removeItem('mt5_three_dots_y');
+    localStorage.removeItem('mt5_trade_header_btn_size');
+    localStorage.removeItem('mt5_trade_center_icon_size');
+    localStorage.removeItem('mt5_trade_positions_bar_height');
+    localStorage.removeItem('mt5_trade_font_family');
+    localStorage.removeItem('mt5_trade_font_numbers');
+    localStorage.removeItem('mt5_trade_font_weight_text');
+    localStorage.removeItem('mt5_trade_font_weight_numbers');
+    localStorage.removeItem('mt5_trade_numbers_spacing');
+    localStorage.removeItem('mt5_trade_font_size_profit');
+    localStorage.removeItem('mt5_trade_font_size_account');
+    localStorage.removeItem('mt5_trade_font_size_symbol');
+    localStorage.removeItem('mt5_trade_font_size_prices');
     
     // Restore default values
     State.timeSpacingPx = 92;
@@ -3444,6 +3672,18 @@ if (resetCustomizationsBtn) {
     State.weightLabels = '400';
     State.weightPrices = '450';
     State.weightTime = '400';
+    State.tradeHeaderBtnSize = 38;
+    State.tradeCenterIconSize = 135;
+    State.tradePositionsBarHeight = 34;
+    State.tradeFontFamily = '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", sans-serif';
+    State.tradeFontNumbers = '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", sans-serif';
+    State.tradeFontWeightText = '500';
+    State.tradeFontWeightNumbers = '600';
+    State.tradeNumbersSpacing = 0;
+    State.tradeFontSizeProfit = 19;
+    State.tradeFontSizeAccount = 14;
+    State.tradeFontSizeSymbol = 14.5;
+    State.tradeFontSizePrices = 12.5;
     State.colorBuyLabel = '#3C81FF';
     State.colorBuyText = '#3C81FF';
     State.colorSellWord = '#E94015';
@@ -3452,6 +3692,7 @@ if (resetCustomizationsBtn) {
     State.colorSubtitle = '#50535e';
     State.arrowStyle = 'filledTriangle';
     applySubtitleColor();
+    applyTradeFontSettings();
     
     // Refresh inputs on screen
     if (smoothReplayToggle) smoothReplayToggle.checked = true;

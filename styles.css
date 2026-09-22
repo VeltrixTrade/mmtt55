@@ -185,10 +185,14 @@ button, input, select, textarea {
     align-items: center;
     background: var(--bg-page-header);
     border-bottom: 1.5px solid var(--mt5-border);
-    height: 42px;
+    height: 41px;
+    width: 390px;
+    max-width: 100%;
+    direction: ltr;
     padding: 0;
     transition: all 0.25s cubic-bezier(0.1, 0.8, 0.2, 1);
     overflow: hidden;
+    box-sizing: border-box;
 }
 
 .trading-panel.hidden {
@@ -200,8 +204,9 @@ button, input, select, textarea {
 
 .trade-btn {
     position: relative;
-    flex: 1;
-    height: 100%;
+    width: 117px;
+    flex: 0 0 117px;
+    height: 41px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -209,6 +214,7 @@ button, input, select, textarea {
     cursor: pointer;
     padding: 5px;
     transition: background-color 0.1s ease-in-out;
+    box-sizing: border-box;
 }
 
 .trade-btn.sell {
@@ -259,36 +265,42 @@ button, input, select, textarea {
 .lot-selector {
     display: flex;
     align-items: center;
-    background: #fff;
-    height: 100%;
-    width: 95px;
+    justify-content: space-between;
+    background: var(--input-bg);
+    height: 41px;
+    width: 156px;
+    flex: 0 0 156px;
     border-left: 1px solid var(--mt5-border);
     border-right: 1px solid var(--mt5-border);
+    box-sizing: border-box;
+    direction: ltr;
 }
 
 .lot-adjust {
     background: none;
     border: none;
-    width: 24px;
+    width: 32px;
     height: 100%;
     font-size: 9px;
-    color: #333;
+    color: var(--text-primary);
     cursor: pointer;
     display: flex;
     justify-content: center;
     align-items: center;
+    flex-shrink: 0;
 }
 
 #lot-input {
     flex: 1;
-    width: 47px;
+    width: calc(156px - 64px);
     height: 100%;
     border: none;
     text-align: center;
     font-size: 15px;
     font-weight: bold;
-    color: #000;
+    color: var(--text-primary);
     outline: none;
+    background: transparent;
 }
 
 /* App Body (Container for pages) */
@@ -694,6 +706,18 @@ button, input, select, textarea {
     background: var(--bg-page-header);
     border-top: none; /* removed line between time scale and bottom bar */
     flex-shrink: 0;
+    z-index: 50;
+}
+
+body.trade-tab-active .status-bar-spacer {
+    background-color: #000000 !important;
+    background-image: none !important;
+}
+
+body.trade-tab-active .iphone-screen,
+body.trade-tab-active .iphone-frame,
+body.trade-tab-active .bottom-nav-container {
+    background-color: #000000 !important;
 }
 
 .bottom-nav-img {
@@ -758,42 +782,364 @@ button, input, select, textarea {
     background: rgba(11, 92, 213, 0.08);
 }
 
-/* Trade positions tab */
-.balance-card {
-    background: var(--bg-page-header);
-    padding: 15px;
-    border-bottom: 1px solid var(--border-color);
-    transition: background 0.3s ease, border-color 0.3s ease;
+/* =========================================================
+   MT5 MOBILE TRADE TAB (تداول) - EXACT NATIVE UI
+   ========================================================= */
+
+#page-trade {
+    background-color: #000000 !important;
+    color: #ffffff;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", system-ui, sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100%;
 }
 
-.balance-row {
+/* 1. Header العلوي */
+.trade-header {
+    height: 50px;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    background-color: #000000;
+    flex-shrink: 0;
+    direction: ltr; /* Keeps + on left, USD in center, details on right */
+    position: relative;
+    border-bottom: none;
+}
+
+.trade-header-btn {
+    width: var(--trade-header-btn-size, 38px);
+    height: var(--trade-header-btn-size, 38px);
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    cursor: pointer;
+    outline: none;
+    transition: transform 0.1s ease, opacity 0.15s ease;
+    padding: 0;
+    overflow: hidden;
+}
+
+.trade-header-btn:active {
+    transform: scale(0.92);
+    opacity: 0.8;
+}
+
+.trade-header-btn-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    pointer-events: none;
+}
+
+.trade-header-title {
+    font-family: var(--trade-font-numbers, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif);
+    font-size: var(--trade-font-size-profit, 19px);
+    font-weight: var(--trade-font-weight-numbers, 700);
+    color: #ffffff;
+    letter-spacing: var(--trade-numbers-spacing, -0.2px);
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    transition: color 0.15s ease;
+}
+
+.trade-header-title.profit {
+    color: #2979ff; /* MT5 Blue */
+}
+
+.trade-header-title.loss {
+    color: #ff3b30; /* MT5 Red */
+}
+
+/* 2. Scrollable Body */
+.trade-scrollable {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    padding-bottom: 24px;
+    background-color: #000000;
+}
+
+/* 3. Account Metrics Summary */
+.trade-account-summary {
+    padding: 2px 0 10px 0;
+    background-color: #000000;
+    direction: rtl;
+}
+
+.trade-account-row {
     display: flex;
     justify-content: space-between;
+    align-items: center;
+    padding: 3.5px 16px;
     font-size: 14px;
-    padding: 4px 0;
-    color: var(--text-primary);
+    line-height: 1.35;
 }
 
-.balance-row:first-child {
-    font-weight: bold;
-    font-size: 16px;
-    color: var(--text-primary);
+.trade-row-label {
+    color: #ffffff;
+    font-size: var(--trade-font-size-account, 14px);
+    font-family: var(--trade-font-family, inherit);
+    font-weight: var(--trade-font-weight-text, 400);
 }
 
-.positions-list, .history-list {
+.trade-row-val {
+    color: #ffffff;
+    font-size: var(--trade-font-size-account, 14px);
+    font-variant-numeric: tabular-nums;
+    font-family: var(--trade-font-numbers, inherit);
+    font-weight: var(--trade-font-weight-numbers, 500);
+    letter-spacing: var(--trade-numbers-spacing, 0px);
+    direction: ltr;
+    text-align: left;
+}
+
+/* 4. Empty State: Center MT5 Trending Icon */
+.trade-empty-state {
+    width: 100%;
+    min-height: 280px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 0;
+}
+
+.trade-empty-img {
+    width: var(--trade-center-icon-size, 135px);
+    max-width: var(--trade-center-icon-size, 135px);
+    height: auto;
+    display: block;
+    pointer-events: none;
+}
+
+/* 5. Positions Section Bar (مراكز •••) */
+.trade-positions-wrapper {
+    width: 100%;
+    background-color: #000000;
+}
+
+.trade-positions-bar {
+    width: 100%;
+    height: var(--trade-positions-bar-height, 34px);
+    padding: 0;
+    margin: 0;
+    border: none;
+    background: #000000;
+    display: block;
+    overflow: hidden;
+}
+
+.trade-positions-bar-img {
+    width: 100%;
+    height: var(--trade-positions-bar-height, 34px);
+    object-fit: cover;
+    display: block;
+    pointer-events: none;
+}
+
+/* 6. Open Positions Rows */
+#page-trade .positions-list {
+    padding: 0;
+}
+
+.trade-pos-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 11px 16px;
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.09);
+    background-color: #000000;
+    cursor: pointer;
+    direction: ltr; /* P/L on Left, Details on Right */
+    transition: background-color 0.15s ease;
+}
+
+.trade-pos-row:active {
+    background-color: #121215;
+}
+
+.trade-pos-profit {
+    font-size: var(--trade-font-size-profit, 19px);
+    font-weight: var(--trade-font-weight-numbers, 600);
+    font-variant-numeric: tabular-nums;
+    font-family: var(--trade-font-numbers, inherit);
+    letter-spacing: var(--trade-numbers-spacing, -0.3px);
+    text-align: left;
+}
+
+.trade-pos-profit.profit {
+    color: #2979ff;
+}
+
+.trade-pos-profit.loss {
+    color: #ff3b30;
+}
+
+.trade-pos-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 3px;
+}
+
+.trade-pos-header-line {
+    font-size: var(--trade-font-size-symbol, 14.5px);
+    font-weight: var(--trade-font-weight-text, 600);
+    display: flex;
+    align-items: center;
+    gap: 4.5px;
+    direction: ltr;
+    font-family: var(--trade-font-family, inherit);
+}
+
+.trade-pos-symbol {
+    color: #ffffff;
+    font-family: var(--trade-font-family, inherit);
+}
+
+.trade-pos-side {
+    font-weight: var(--trade-font-weight-text, 600);
+    font-family: var(--trade-font-family, inherit);
+}
+
+.trade-pos-side.buy {
+    color: #2979ff;
+}
+
+.trade-pos-side.sell {
+    color: #ff3b30;
+}
+
+.trade-pos-volume {
+    color: #2979ff;
+    font-family: var(--trade-font-numbers, inherit);
+    font-weight: var(--trade-font-weight-numbers, 600);
+    letter-spacing: var(--trade-numbers-spacing, 0px);
+}
+
+.trade-pos-side.sell ~ .trade-pos-volume {
+    color: #ff3b30;
+}
+
+.trade-pos-prices {
+    font-size: var(--trade-font-size-prices, 12.5px);
+    color: #8e8e93;
+    font-variant-numeric: tabular-nums;
+    font-family: var(--trade-font-numbers, inherit);
+    font-weight: var(--trade-font-weight-numbers, 400);
+    letter-spacing: var(--trade-numbers-spacing, 0px);
+    direction: ltr;
+}
+
+/* 7. Action Sheet / Modal */
+.trade-action-sheet-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 9999;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 16px;
+    transition: opacity 0.25s ease;
+}
+
+.trade-action-sheet-overlay.hidden {
+    display: none !important;
+}
+
+.trade-action-sheet {
+    width: 100%;
+    max-width: 360px;
+    background: #1c1c1e;
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 12px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.trade-sheet-header {
+    padding: 14px 16px;
+    text-align: center;
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.12);
+}
+
+.trade-sheet-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.trade-sheet-sub {
+    font-size: 12px;
+    color: #8e8e93;
+    margin-top: 3px;
+    direction: ltr;
+}
+
+.trade-sheet-actions {
+    display: flex;
+    flex-direction: column;
+}
+
+.trade-sheet-btn {
+    padding: 14px;
+    font-size: 15px;
+    background: transparent;
+    border: none;
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.08);
+    color: #2979ff;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.trade-sheet-btn:active {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.trade-sheet-btn.danger {
+    color: #ff3b30;
+    font-weight: 600;
+}
+
+.trade-sheet-btn.cancel {
+    border-bottom: none;
+    color: #8e8e93;
+}
+
+/* History tab styles (preserved) */
+.history-list {
     flex: 1;
     overflow-y: auto;
     padding: 10px;
 }
 
-.no-positions, .no-history {
+.no-history {
     padding: 40px;
     text-align: center;
     color: #8e8e93;
     font-size: 14px;
 }
 
-.position-item, .history-item {
+.history-item {
     border: 1px solid var(--mt5-border);
     border-radius: 8px;
     padding: 12px;
