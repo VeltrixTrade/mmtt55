@@ -356,7 +356,7 @@ button, input, select, textarea {
     flex: 1;
     position: relative;
     overflow: hidden;
-    background: #fff;
+    background: #000000;
 }
 
 #main-chart-canvas {
@@ -705,8 +705,9 @@ button, input, select, textarea {
     position: relative;
     width: 100%;
     height: auto;
-    background: var(--bg-page-header);
-    border-top: none; /* removed line between time scale and bottom bar */
+    background: #000000 !important;
+    background-color: #000000 !important;
+    border-top: none !important;
     flex-shrink: 0;
     z-index: 50;
 }
@@ -824,12 +825,18 @@ body.trade-tab-active .bottom-nav-container {
     display: flex;
     align-items: center;
     justify-content: center;
+    align-self: center;
     color: #ffffff;
     cursor: pointer;
     outline: none;
     transition: transform 0.1s ease, opacity 0.15s ease;
     padding: 0;
+    margin: 0;
     overflow: hidden;
+}
+
+.trade-header-plus-btn {
+    margin-top: 2px; /* Moves left sticker down to align perfectly with right sticker */
 }
 
 .trade-header-btn:active {
@@ -878,7 +885,7 @@ body.trade-tab-active .bottom-nav-container {
 .trade-account-summary {
     padding: 2px 0 10px 0;
     background-color: #000000;
-    direction: rtl;
+    direction: ltr;
 }
 
 .trade-account-row {
@@ -888,6 +895,7 @@ body.trade-tab-active .bottom-nav-container {
     padding: 3.5px 6px;
     font-size: 14px;
     line-height: 1.35;
+    direction: ltr;
 }
 
 .trade-row-label {
@@ -895,6 +903,8 @@ body.trade-tab-active .bottom-nav-container {
     font-size: var(--trade-font-size-account, 14px);
     font-family: var(--trade-font-family, inherit);
     font-weight: var(--trade-font-weight-text, 400);
+    direction: rtl;
+    text-align: right;
 }
 
 .trade-row-val {
@@ -906,6 +916,9 @@ body.trade-tab-active .bottom-nav-container {
     letter-spacing: var(--trade-numbers-spacing, 0px);
     direction: ltr;
     text-align: left;
+    margin: 0;
+    padding: 0;
+    white-space: nowrap;
 }
 
 /* 4. Empty State: Center MT5 Trending Icon */
@@ -960,8 +973,8 @@ body.trade-tab-active .bottom-nav-container {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 11px 6px;
-    border-bottom: 0.5px solid rgba(255, 255, 255, 0.09);
+    padding: 9.5px 6px;
+    border-bottom: none;
     background-color: #000000;
     cursor: pointer;
     direction: ltr; /* P/L on Left, Details on Right */
@@ -979,6 +992,10 @@ body.trade-tab-active .bottom-nav-container {
     font-family: var(--trade-font-numbers, inherit);
     letter-spacing: var(--trade-numbers-spacing, -0.3px);
     text-align: left;
+    direction: ltr;
+    margin: 0;
+    padding: 0;
+    white-space: nowrap;
 }
 
 .trade-pos-profit.profit {
@@ -1009,6 +1026,15 @@ body.trade-tab-active .bottom-nav-container {
 .trade-pos-symbol {
     color: #ffffff;
     font-family: var(--trade-font-family, inherit);
+    display: inline-block;
+    width: 43px;
+    height: 12px;
+    line-height: 12px;
+    font-size: 11.5px;
+    letter-spacing: -0.5px;
+    text-align: left;
+    overflow: visible;
+    white-space: nowrap;
 }
 
 .trade-pos-side {

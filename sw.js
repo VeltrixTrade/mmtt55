@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mt5-simulator-v85';
+const CACHE_NAME = 'mt5-simulator-v88';
 const ASSETS = [
   './',
   './index.html',

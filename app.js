@@ -568,6 +568,7 @@ function drawChartFrame() {
     
     for (let i = 0; i < priceCount; i++) {
         const y = yStart + i * yStep;
+        if (y > MARGIN_TOP + chartHeight - 6) break;
         const gridPrice = getPriceFromY(y);
         
         // Horizontal grid line removed
@@ -2506,27 +2507,13 @@ function updateTradeTabUI() {
             const isProfit = pos.profit >= 0;
             const profitStr = formatFinancial(pos.profit);
             const sideClass = pos.type.toLowerCase();
-            const symbolDisplay = 'XAUUSD.s';
+            const symbolDisplay = 'XAUUSD';
             
             const row = document.createElement('div');
             row.className = 'trade-pos-row';
             row.dataset.id = pos.id;
             
-            row.innerHTML = `
-                <div class="trade-pos-profit ${isProfit ? 'profit' : 'loss'}">
-                    ${profitStr}
-                </div>
-                <div class="trade-pos-info">
-                    <div class="trade-pos-header-line">
-                        <span class="trade-pos-symbol">${symbolDisplay}</span>
-                        <span class="trade-pos-side ${sideClass}">${sideClass}</span>
-                        <span class="trade-pos-volume">${pos.lot.toFixed(pos.lot % 1 === 0 ? 1 : 2)}</span>
-                    </div>
-                    <div class="trade-pos-prices">
-                        ${currentClosePrice.toFixed(2)} &larr; ${pos.openPrice.toFixed(2)}
-                    </div>
-                </div>
-            `;
+            row.innerHTML = `<div class="trade-pos-profit ${isProfit ? 'profit' : 'loss'}">${profitStr}</div><div class="trade-pos-info"><div class="trade-pos-header-line"><span class="trade-pos-symbol">${symbolDisplay}</span><span class="trade-pos-side ${sideClass}">${sideClass}</span><span class="trade-pos-volume">${pos.lot.toFixed(pos.lot % 1 === 0 ? 1 : 2)}</span></div><div class="trade-pos-prices">${currentClosePrice.toFixed(2)} &larr; ${pos.openPrice.toFixed(2)}</div></div>`;
             
             row.addEventListener('click', () => {
                 openTradeActionSheet(pos);
@@ -2546,7 +2533,7 @@ function openTradeActionSheet(pos) {
     
     const currentClosePrice = pos.type === 'BUY' ? State.currentBid : State.currentAsk;
     if (titleEl) {
-        titleEl.textContent = `XAUUSD.s, ${pos.type.toLowerCase()} ${pos.lot.toFixed(2)}`;
+        titleEl.textContent = `XAUUSD, ${pos.type.toLowerCase()} ${pos.lot.toFixed(2)}`;
     }
     if (subEl) {
         subEl.innerHTML = `${currentClosePrice.toFixed(2)} &larr; ${pos.openPrice.toFixed(2)}`;
