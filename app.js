@@ -119,7 +119,8 @@ const State = {
     timeMaxOffset: parseFloat(localStorage.getItem('mt5_time_max_offset')) || 44,
     timeRightMargin: parseFloat(localStorage.getItem('mt5_time_right_margin')) || 11,
     threeDotsX: parseFloat(localStorage.getItem('mt5_three_dots_x')) || 34,
-    threeDotsY: parseFloat(localStorage.getItem('mt5_three_dots_y')) || 630,
+    threeDotsY: parseFloat(localStorage.getItem('mt5_three_dots_y')) || 664,
+    chartBoxHeight: parseFloat(localStorage.getItem('mt5_chart_box_height')) || 650,
     
     fontLabels: localStorage.getItem('mt5_font_labels') || '"SF Pro Display", -apple-system, sans-serif',
     fontPrices: localStorage.getItem('mt5_font_prices') || '"SF Pro Text", -apple-system, sans-serif',
@@ -353,11 +354,16 @@ function getActiveCandles() {
 function resizeCanvas() {
     const rect = canvas.getBoundingClientRect();
     State.width = rect.width;
-    State.height = rect.height;
     
-    // Scale canvas to match high DPI displays
+    // Explicit candlestick box height (default 650px, customizable from Settings)
+    const boxHeight = State.chartBoxHeight || 650;
+    const totalCanvasHeight = boxHeight + MARGIN_BOTTOM + MARGIN_TOP;
+    State.height = totalCanvasHeight;
+    
+    // Set canvas element styles and backing store dimensions
+    canvas.style.height = totalCanvasHeight + 'px';
     canvas.width = rect.width * State.devicePixelRatio;
-    canvas.height = rect.height * State.devicePixelRatio;
+    canvas.height = totalCanvasHeight * State.devicePixelRatio;
     
     ctx.scale(State.devicePixelRatio, State.devicePixelRatio);
     drawChart();
@@ -3474,7 +3480,8 @@ const advancedSettings = {
     'setting-trade-font-size-account': { key: 'tradeFontSizeAccount', type: 'float', storage: 'mt5_trade_font_size_account' },
     'setting-trade-font-size-symbol': { key: 'tradeFontSizeSymbol', type: 'float', storage: 'mt5_trade_font_size_symbol' },
     'setting-trade-font-size-prices': { key: 'tradeFontSizePrices', type: 'float', storage: 'mt5_trade_font_size_prices' },
-    // Sticker Vertical Positions
+    // Chart Box & Sticker Positions
+    'setting-chart-box-height': { key: 'chartBoxHeight', type: 'float', storage: 'mt5_chart_box_height' },
     'setting-top-sticker-offset-y': { key: 'topStickerOffsetY', type: 'float', storage: 'mt5_top_sticker_offset_y' },
     'setting-bottom-sticker-offset-y': { key: 'bottomStickerOffsetY', type: 'float', storage: 'mt5_bottom_sticker_offset_y' }
 };
@@ -3482,6 +3489,7 @@ const advancedSettings = {
 function applyStickerOffsetSettings() {
     const root = document.documentElement;
     if (!root) return;
+    root.style.setProperty('--chart-box-height', `${State.chartBoxHeight || 650}px`);
     root.style.setProperty('--top-sticker-offset-y', `${State.topStickerOffsetY || 0}px`);
     root.style.setProperty('--bottom-sticker-offset-y', `${State.bottomStickerOffsetY || 0}px`);
 }
@@ -3526,7 +3534,11 @@ function initAdvancedSettings() {
             applySubtitleColor();
             applyTradeFontSettings();
             applyStickerOffsetSettings();
-            drawChart();
+            if (config.key === 'chartBoxHeight') {
+                resizeCanvas();
+            } else {
+                drawChart();
+            }
         });
     });
     applySubtitleColor();
