@@ -143,6 +143,9 @@ const State = {
     tradeFontSizeSymbol: parseFloat(localStorage.getItem('mt5_trade_font_size_symbol')) || 14.5,
     tradeFontSizePrices: parseFloat(localStorage.getItem('mt5_trade_font_size_prices')) || 12.5,
     
+    topStickerOffsetY: parseFloat(localStorage.getItem('mt5_top_sticker_offset_y')) || 0,
+    bottomStickerOffsetY: parseFloat(localStorage.getItem('mt5_bottom_sticker_offset_y')) || 18.5,
+    
     colorBuyLabel: localStorage.getItem('mt5_color_buy_label') || '#3C81FF',
     colorBuyText: localStorage.getItem('mt5_color_buy_text') || '#3C81FF',
     colorSellWord: localStorage.getItem('mt5_color_sell_word') || '#E94015',
@@ -563,14 +566,14 @@ function drawChartFrame() {
     ctx.font = State.weightPrices + ' ' + State.fontSizePrices + 'px ' + State.fontPrices;
     ctx.fillStyle = State.colors.foreground;
     
-    // Price grid lines: 15 labels, spaced to fit exactly 99px top offset and 135px bottom offset.
-    const priceCount = 15;
-    const yStart = 13.5;
-    const yStep = 42.785;
+    // Price grid lines: 16 labels evenly spaced across the 650px chart box (removing bottom-most price)
+    const priceCount = 16;
+    const yStart = 12;
+    const yStep = (chartHeight - 24) / 15;
     
     for (let i = 0; i < priceCount; i++) {
         const y = yStart + i * yStep;
-        if (y > MARGIN_TOP + chartHeight - 6) break;
+        if (y > MARGIN_TOP + chartHeight - 4) break;
         const gridPrice = getPriceFromY(y);
         
         // Horizontal grid line removed
@@ -3470,8 +3473,18 @@ const advancedSettings = {
     'setting-trade-font-size-profit': { key: 'tradeFontSizeProfit', type: 'float', storage: 'mt5_trade_font_size_profit' },
     'setting-trade-font-size-account': { key: 'tradeFontSizeAccount', type: 'float', storage: 'mt5_trade_font_size_account' },
     'setting-trade-font-size-symbol': { key: 'tradeFontSizeSymbol', type: 'float', storage: 'mt5_trade_font_size_symbol' },
-    'setting-trade-font-size-prices': { key: 'tradeFontSizePrices', type: 'float', storage: 'mt5_trade_font_size_prices' }
+    'setting-trade-font-size-prices': { key: 'tradeFontSizePrices', type: 'float', storage: 'mt5_trade_font_size_prices' },
+    // Sticker Vertical Positions
+    'setting-top-sticker-offset-y': { key: 'topStickerOffsetY', type: 'float', storage: 'mt5_top_sticker_offset_y' },
+    'setting-bottom-sticker-offset-y': { key: 'bottomStickerOffsetY', type: 'float', storage: 'mt5_bottom_sticker_offset_y' }
 };
+
+function applyStickerOffsetSettings() {
+    const root = document.documentElement;
+    if (!root) return;
+    root.style.setProperty('--top-sticker-offset-y', `${State.topStickerOffsetY || 0}px`);
+    root.style.setProperty('--bottom-sticker-offset-y', `${State.bottomStickerOffsetY || 18.5}px`);
+}
 
 function applyTradeFontSettings() {
     const tradePage = document.getElementById('page-trade');
@@ -3512,11 +3525,13 @@ function initAdvancedSettings() {
             localStorage.setItem(config.storage, val);
             applySubtitleColor();
             applyTradeFontSettings();
+            applyStickerOffsetSettings();
             drawChart();
         });
     });
     applySubtitleColor();
     applyTradeFontSettings();
+    applyStickerOffsetSettings();
 }
 
 // Bind Save and Reset Customizations button actions (wrapped in checks to prevent crashes on cached layouts)

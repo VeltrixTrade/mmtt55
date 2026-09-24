@@ -19,6 +19,8 @@
     --border-color: #e5e5ea;
     --input-bg: #ffffff;
     --toolbar-filter: none;
+    --top-sticker-offset-y: 0px;
+    --bottom-sticker-offset-y: 18.5px;
 }
 
 /* Dark theme overrides */
@@ -104,15 +106,15 @@ button, input, select, textarea {
     background: #000000;
 }
 
-/* Mobile standalone PWA: show status bar spacer with safe area height and solid black background */
+/* Mobile standalone PWA: show status bar spacer with 16px height (16px + 44px header = 60px total top inset) */
 @media (display-mode: standalone) {
     .status-bar-spacer {
         display: block;
-        height: env(safe-area-inset-top, 47px);
+        height: 16px;
         background: #000000;
     }
     .timeframe-dropdown, .drawing-toolbar {
-        top: calc(env(safe-area-inset-top, 47px) + 44px) !important;
+        top: 60px !important;
     }
 }
 
@@ -151,6 +153,7 @@ button, input, select, textarea {
     background: var(--bg-page-header);
     border-bottom: none;
     flex-shrink: 0;
+    transform: translateY(var(--top-sticker-offset-y, 0px));
 }
 
 .mt5-header-img {
@@ -710,7 +713,7 @@ button, input, select, textarea {
     border-top: none !important;
     flex-shrink: 0;
     z-index: 50;
-    margin: 0;
+    margin-bottom: var(--bottom-sticker-offset-y, 18.5px) !important;
     padding: 0;
 }
 
