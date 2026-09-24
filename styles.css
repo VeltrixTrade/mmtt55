@@ -710,6 +710,7 @@ button, input, select, textarea {
     border-top: none !important;
     flex-shrink: 0;
     z-index: 50;
+    margin-bottom: -10px;
 }
 
 body.trade-tab-active .status-bar-spacer {
