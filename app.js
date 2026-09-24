@@ -456,7 +456,7 @@ function updateReplayToggleButtonPosition() {
     const dotX = MARGIN_LEFT + chartWidth + State.threeDotsX;
     const chartHeight = State.height - MARGIN_BOTTOM - MARGIN_TOP;
     const defaultDotY = MARGIN_TOP + chartHeight + 14;
-    const dotY = (State.threeDotsY && State.threeDotsY !== 630) ? State.threeDotsY : defaultDotY;
+    const dotY = (State.threeDotsY && State.threeDotsY < MARGIN_TOP + chartHeight + 20 && State.threeDotsY > MARGIN_TOP) ? State.threeDotsY : defaultDotY;
     replayPanelToggle.style.left = (dotX - 34) + 'px';
     replayPanelToggle.style.top = (dotY - 15) + 'px';
     replayPanelToggle.style.bottom = 'auto';
@@ -1154,7 +1154,7 @@ function drawChartFrame() {
     
     // Draw three circles grouping together to form '...'
     const defaultDotY = MARGIN_TOP + chartHeight + 14;
-    const dotY = (State.threeDotsY && State.threeDotsY !== 630) ? State.threeDotsY : defaultDotY;
+    const dotY = (State.threeDotsY && State.threeDotsY < MARGIN_TOP + chartHeight + 20 && State.threeDotsY > MARGIN_TOP) ? State.threeDotsY : defaultDotY;
     const dotX = MARGIN_LEFT + chartWidth + State.threeDotsX;
     ctx.fillStyle = State.colors.foreground;
     

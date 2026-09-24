@@ -18,12 +18,13 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Lato:wght@400;700&family=Montserrat:wght@400;500;700&family=Open+Sans:wght@400;600&family=Outfit:wght@400;500;700&family=Poppins:wght@400;500;600&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="styles.css?v=89">
+    <link rel="stylesheet" href="styles.css?v=90">
 </head>
 <body>
     <!-- Global error catcher to display any mobile browser javascript crash on screen -->
     <script>
         window.addEventListener('error', function(e) {
+            if (!e || e.message === 'Script error.' || !e.filename || (e.filename.indexOf('index.html') === -1 && e.filename.indexOf('app.js') === -1)) return;
             const errDiv = document.createElement('div');
             errDiv.style.position = 'fixed';
             errDiv.style.top = '10px';
@@ -949,6 +950,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=89"></script>
+    <script src="app.js?v=90"></script>
 </body>
 </html>
