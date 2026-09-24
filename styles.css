@@ -97,24 +97,24 @@ button, input, select, textarea {
     overflow: hidden;
 }
 
-/* Default (Mobile standard browser): hide status bar spacer */
+/* Status bar spacer (Always display so top header never touches iPhone status bar/notch) */
 .status-bar-spacer {
-    display: none;
-    height: 0;
+    display: block;
+    height: calc(16px + var(--top-sticker-offset-y, 0px));
     width: 100%;
     flex-shrink: 0;
     background: #000000;
 }
 
-/* Mobile standalone PWA: show status bar spacer with 16px height (16px + 44px header = 60px total top inset) */
+/* Mobile standalone PWA: show status bar spacer with 16px default height */
 @media (display-mode: standalone) {
     .status-bar-spacer {
         display: block;
-        height: 16px;
+        height: calc(16px + var(--top-sticker-offset-y, 0px));
         background: #000000;
     }
     .timeframe-dropdown, .drawing-toolbar {
-        top: 60px !important;
+        top: calc(60px + var(--top-sticker-offset-y, 0px)) !important;
     }
 }
 
@@ -135,13 +135,13 @@ button, input, select, textarea {
     
     .status-bar-spacer {
         display: block;
-        height: 47px;
+        height: calc(47px + var(--top-sticker-offset-y, 0px));
         background: url('status_bar_crop.jpg') no-repeat center;
         background-size: cover;
     }
     
     .timeframe-dropdown, .drawing-toolbar {
-        top: 91px !important;
+        top: calc(91px + var(--top-sticker-offset-y, 0px)) !important;
     }
 }
 
@@ -153,7 +153,6 @@ button, input, select, textarea {
     background: var(--bg-page-header);
     border-bottom: none;
     flex-shrink: 0;
-    transform: translateY(var(--top-sticker-offset-y, 0px));
 }
 
 .mt5-header-img {
@@ -713,8 +712,9 @@ button, input, select, textarea {
     border-top: none !important;
     flex-shrink: 0;
     z-index: 50;
-    margin-bottom: var(--bottom-sticker-offset-y, 18.5px) !important;
+    margin-bottom: 18.5px !important;
     padding: 0;
+    transform: translateY(var(--bottom-sticker-offset-y, 0px));
 }
 
 body.trade-tab-active .status-bar-spacer {

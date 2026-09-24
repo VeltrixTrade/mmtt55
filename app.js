@@ -144,7 +144,7 @@ const State = {
     tradeFontSizePrices: parseFloat(localStorage.getItem('mt5_trade_font_size_prices')) || 12.5,
     
     topStickerOffsetY: parseFloat(localStorage.getItem('mt5_top_sticker_offset_y')) || 0,
-    bottomStickerOffsetY: parseFloat(localStorage.getItem('mt5_bottom_sticker_offset_y')) || 18.5,
+    bottomStickerOffsetY: parseFloat(localStorage.getItem('mt5_bottom_sticker_offset_y')) || 0,
     
     colorBuyLabel: localStorage.getItem('mt5_color_buy_label') || '#3C81FF',
     colorBuyText: localStorage.getItem('mt5_color_buy_text') || '#3C81FF',
@@ -3483,7 +3483,7 @@ function applyStickerOffsetSettings() {
     const root = document.documentElement;
     if (!root) return;
     root.style.setProperty('--top-sticker-offset-y', `${State.topStickerOffsetY || 0}px`);
-    root.style.setProperty('--bottom-sticker-offset-y', `${State.bottomStickerOffsetY || 18.5}px`);
+    root.style.setProperty('--bottom-sticker-offset-y', `${State.bottomStickerOffsetY || 0}px`);
 }
 
 function applyTradeFontSettings() {

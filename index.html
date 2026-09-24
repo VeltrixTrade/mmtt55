@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Lato:wght@400;700&family=Montserrat:wght@400;500;700&family=Open+Sans:wght@400;600&family=Outfit:wght@400;500;700&family=Poppins:wght@400;500;600&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="styles.css?v=93">
+    <link rel="stylesheet" href="styles.css?v=94">
 </head>
 <body>
     <!-- Global error catcher to display any mobile browser javascript crash on screen -->
@@ -577,14 +577,14 @@
                         </div>
 
                         <div class="settings-group">
-                            <div class="settings-title">إزاحة وموقع الملصقات العلوية والسفلية (Top & Bottom Stickers Position)</div>
+                            <div class="settings-title">إزاحة وموقع الملصقات العلوية والسفلية (Stickers Position)</div>
                             <div class="settings-item">
-                                <span>إزاحة الشريط/الملصق العلوي (عمودياً px)</span>
+                                <span>إزاحة الشريط/الملصق العلوي (موجب لإنزاله / سالب لرفعه px)</span>
                                 <input type="number" id="setting-top-sticker-offset-y" value="0" step="1" style="width: 65px; text-align: center;">
                             </div>
                             <div class="settings-item">
-                                <span>مسافة الشريط/الملصق السفلي عن الأسفل (px)</span>
-                                <input type="number" id="setting-bottom-sticker-offset-y" value="18.5" step="0.5" style="width: 65px; text-align: center;">
+                                <span>إزاحة الشريط/الملصق السفلي (سالب لرفعه / موجب لإنزاله px)</span>
+                                <input type="number" id="setting-bottom-sticker-offset-y" value="0" step="1" style="width: 65px; text-align: center;">
                             </div>
                         </div>
 
@@ -962,6 +962,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=93"></script>
+    <script src="app.js?v=94"></script>
 </body>
 </html>
