@@ -732,7 +732,11 @@ button, input, select, textarea {
     margin-top: auto;
     transform: translateY(var(--bottom-sticker-offset-y, 0px));
     margin-bottom: 0 !important;
-    padding: 0;
+    padding-top: 0;
+    padding-left: 0;
+    padding-right: 0;
+    padding-bottom: constant(safe-area-inset-bottom, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 body.trade-tab-active .status-bar-spacer {
@@ -755,7 +759,9 @@ body.trade-tab-active .bottom-nav-container {
 .nav-overlay-btn {
     position: absolute;
     top: 0;
-    height: 100%;
+    bottom: constant(safe-area-inset-bottom, 0px);
+    bottom: env(safe-area-inset-bottom, 0px);
+    height: auto;
     width: 20%;
     background: transparent;
     border: none;
@@ -1369,9 +1375,11 @@ body.trade-tab-active .bottom-nav-container {
 .nav-mask {
     position: absolute;
     top: 0;
+    bottom: constant(safe-area-inset-bottom, 0px);
+    bottom: env(safe-area-inset-bottom, 0px);
     right: 20%; /* covers Chart tab icon */
     width: 20%;
-    height: 100%;
+    height: auto;
     pointer-events: none;
     z-index: 3;
     backdrop-filter: grayscale(100%);
@@ -1387,8 +1395,10 @@ body.trade-tab-active .bottom-nav-container {
 .nav-tint {
     position: absolute;
     top: 0;
+    bottom: constant(safe-area-inset-bottom, 0px);
+    bottom: env(safe-area-inset-bottom, 0px);
     width: 20%;
-    height: 100%;
+    height: auto;
     pointer-events: none;
     z-index: 3;
     background: rgba(41, 98, 255, 0.22);
