@@ -352,19 +352,28 @@ function getActiveCandles() {
 
 // --- CANVAS CHART ENGINE ---
 function resizeCanvas() {
-    const rect = canvas.getBoundingClientRect();
-    State.width = rect.width;
+    const chartContainer = document.querySelector('.chart-container');
+    if (!chartContainer) return;
     
-    // Explicit candlestick box height (default 650px, customizable from Settings)
-    const boxHeight = State.chartBoxHeight || 650;
-    const totalCanvasHeight = boxHeight + MARGIN_BOTTOM + MARGIN_TOP;
+    const rect = chartContainer.getBoundingClientRect();
+    State.width = rect.width || (canvas.parentElement ? canvas.parentElement.clientWidth : 390);
+    
+    const containerHeight = chartContainer.clientHeight || rect.height || 650;
+    
+    let totalCanvasHeight = containerHeight;
+    if (State.chartBoxHeight && State.chartBoxHeight > 0 && State.chartBoxHeight !== 650) {
+        totalCanvasHeight = State.chartBoxHeight;
+    } else {
+        totalCanvasHeight = Math.max(200, containerHeight);
+    }
+    
     State.height = totalCanvasHeight;
     
-    // Set canvas element styles and backing store dimensions
     canvas.style.height = totalCanvasHeight + 'px';
-    canvas.width = rect.width * State.devicePixelRatio;
-    canvas.height = totalCanvasHeight * State.devicePixelRatio;
+    canvas.width = Math.round(State.width * State.devicePixelRatio);
+    canvas.height = Math.round(totalCanvasHeight * State.devicePixelRatio);
     
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.scale(State.devicePixelRatio, State.devicePixelRatio);
     drawChart();
 }
@@ -3534,7 +3543,7 @@ function initAdvancedSettings() {
             applySubtitleColor();
             applyTradeFontSettings();
             applyStickerOffsetSettings();
-            if (config.key === 'chartBoxHeight') {
+            if (config.key === 'chartBoxHeight' || config.key === 'topStickerOffsetY' || config.key === 'bottomStickerOffsetY') {
                 resizeCanvas();
             } else {
                 drawChart();
