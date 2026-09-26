@@ -3660,8 +3660,14 @@ if (resetCustomizationsBtn) {
     localStorage.removeItem('mt5_trade_font_size_account');
     localStorage.removeItem('mt5_trade_font_size_symbol');
     localStorage.removeItem('mt5_trade_font_size_prices');
+    localStorage.removeItem('mt5_top_sticker_offset_y');
+    localStorage.removeItem('mt5_bottom_sticker_offset_y');
+    localStorage.removeItem('mt5_chart_box_height');
     
     // Restore default values
+    State.topStickerOffsetY = 0;
+    State.bottomStickerOffsetY = 0;
+    State.chartBoxHeight = 650;
     State.timeSpacingPx = 92;
     State.timeMaxOffset = 44;
     State.timeRightMargin = 11;
