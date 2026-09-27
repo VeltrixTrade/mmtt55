@@ -738,7 +738,7 @@ button, input, select, textarea {
     flex-shrink: 0;
     z-index: 9999 !important;
     margin-top: auto;
-    transform: translateY(calc(-1 * var(--bottom-sticker-offset-y, 0px)));
+    transform: translateY(calc(env(safe-area-inset-bottom, 20px) + var(--bottom-sticker-offset-y, 0px)));
     margin-bottom: 0 !important;
     padding: 0 !important;
     overflow: visible !important;
