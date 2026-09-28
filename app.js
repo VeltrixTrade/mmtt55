@@ -2808,15 +2808,6 @@ document.querySelectorAll('.tf-option').forEach(option => {
             tfDisplayBtn.textContent = tf; // update the top-right button label if it exists!
         }
         
-        // Show/hide timeframe overlay image (M15.jpg) in the header
-        const tfOverlay = document.getElementById('header-tf-overlay');
-        if (tfOverlay) {
-            if (tf === 'M15') {
-                tfOverlay.classList.remove('hidden');
-            } else {
-                tfOverlay.classList.add('hidden');
-            }
-        }
         
         // Update timeframe state minutes
         let mins = 5;
@@ -3188,37 +3179,22 @@ document.getElementById('preset-tv').addEventListener('click', () => {
 
 function updateHeaderImages() {
     const mainHeaderImg = document.querySelector('.mt5-header-img');
-    const tfOverlay = document.getElementById('header-tf-overlay');
     const bottomNavImg = document.querySelector('.bottom-nav-img');
     const isM15 = State.timeframeMinutes === 15;
     
     if (State.isDarkMode) {
         if (mainHeaderImg) {
-            mainHeaderImg.src = 'وضع ليلي 5 دقائق.jpg?v=74';
-        }
-        if (tfOverlay) {
-            if (isM15) {
-                tfOverlay.classList.remove('hidden');
-            } else {
-                tfOverlay.classList.add('hidden');
-            }
+            mainHeaderImg.src = isM15 ? 'وضع ليلي 15 دقيقة.jpg?v=108' : 'وضع ليلي 5 دقائق.jpg?v=108';
         }
         if (bottomNavImg) {
-            bottomNavImg.src = 'الشريط السفلي اليلي.PNG?v=74';
+            bottomNavImg.src = 'الشريط السفلي اليلي.PNG?v=108';
         }
     } else {
         if (mainHeaderImg) {
-            mainHeaderImg.src = 'الشريط العلوي.JPG?v=74';
-        }
-        if (tfOverlay) {
-            if (isM15) {
-                tfOverlay.classList.remove('hidden');
-            } else {
-                tfOverlay.classList.add('hidden');
-            }
+            mainHeaderImg.src = 'الشريط العلوي.JPG?v=108';
         }
         if (bottomNavImg) {
-            bottomNavImg.src = 'الشريط السفلي.PNG?v=74';
+            bottomNavImg.src = 'الشريط السفلي.PNG?v=108';
         }
     }
 }
@@ -4028,15 +4004,6 @@ window.addEventListener('load', () => {
     if (activeTfDisplay) activeTfDisplay.textContent = savedTf;
     if (tfDisplayBtn) tfDisplayBtn.textContent = savedTf;
     
-    // Toggle the header timeframe M15 overlay
-    const tfOverlay = document.getElementById('header-tf-overlay');
-    if (tfOverlay) {
-        if (savedTf === 'M15') {
-            tfOverlay.classList.remove('hidden');
-        } else {
-            tfOverlay.classList.add('hidden');
-        }
-    }
     
     let mins = 5;
     if (savedTf === 'M1') mins = 1;
