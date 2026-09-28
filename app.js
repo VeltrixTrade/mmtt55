@@ -3184,7 +3184,7 @@ function updateHeaderImages() {
     
     if (State.isDarkMode) {
         if (mainHeaderImg) {
-            mainHeaderImg.src = isM15 ? 'وضع ليلي 15 دقيقة.jpg?v=108' : 'وضع ليلي 5 دقائق.jpg?v=108';
+            mainHeaderImg.src = isM15 ? 'وضع ليلي 15 دقيقة.jpg?v=109' : 'وضع ليلي 5 دقائق.jpg?v=108';
         }
         if (bottomNavImg) {
             bottomNavImg.src = 'الشريط السفلي اليلي.PNG?v=108';
