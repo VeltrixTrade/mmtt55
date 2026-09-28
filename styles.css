@@ -874,7 +874,7 @@ body.trade-tab-active .bottom-nav-container {
 }
 
 .trade-header-btn-img {
-    height: 32px;
+    height: calc(var(--trade-header-btn-size, 38px) * 0.84);
     width: auto;
     max-width: 100%;
     max-height: 100%;
