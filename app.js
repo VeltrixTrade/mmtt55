@@ -471,10 +471,10 @@ function drawChart() {
 function updateReplayToggleButtonPosition() {
     if (!replayPanelToggle) return;
     const chartWidth = State.width - State.marginRight - MARGIN_LEFT;
-    const dotX = MARGIN_LEFT + chartWidth + State.threeDotsX;
+    const dotX = MARGIN_LEFT + chartWidth + (State.threeDotsX || 34);
     const chartHeight = State.height - MARGIN_BOTTOM - MARGIN_TOP;
-    const defaultDotY = MARGIN_TOP + chartHeight + 14;
-    const dotY = (State.threeDotsY && State.threeDotsY < MARGIN_TOP + chartHeight + 20 && State.threeDotsY > MARGIN_TOP) ? State.threeDotsY : defaultDotY;
+    const defaultDotY = MARGIN_TOP + chartHeight;
+    const dotY = (State.threeDotsY && State.threeDotsY !== 630 && State.threeDotsY !== 664) ? State.threeDotsY : defaultDotY;
     replayPanelToggle.style.left = (dotX - 34) + 'px';
     replayPanelToggle.style.top = (dotY - 15) + 'px';
     replayPanelToggle.style.bottom = 'auto';
@@ -581,10 +581,10 @@ function drawChartFrame() {
     ctx.font = State.weightPrices + ' ' + State.fontSizePrices + 'px ' + State.fontPrices;
     ctx.fillStyle = State.colors.foreground;
     
-    // Price grid lines: 16 labels evenly spaced across the 650px chart box (removing bottom-most price)
-    const priceCount = 16;
-    const yStart = 12;
-    const yStep = (chartHeight - 24) / 15;
+    // Price grid lines: 15 labels, spaced to fit exactly 99px top offset and 135px bottom offset (matching 9/22 backup)
+    const priceCount = 15;
+    const yStart = 13.5;
+    const yStep = 42.785;
     
     for (let i = 0; i < priceCount; i++) {
         const y = yStart + i * yStep;
@@ -1171,9 +1171,9 @@ function drawChartFrame() {
     ctx.stroke();
     
     // Draw three circles grouping together to form '...'
-    const defaultDotY = MARGIN_TOP + chartHeight + 14;
-    const dotY = (State.threeDotsY && State.threeDotsY < MARGIN_TOP + chartHeight + 20 && State.threeDotsY > MARGIN_TOP) ? State.threeDotsY : defaultDotY;
-    const dotX = MARGIN_LEFT + chartWidth + State.threeDotsX;
+    const defaultDotY = MARGIN_TOP + chartHeight;
+    const dotY = (State.threeDotsY && State.threeDotsY !== 630 && State.threeDotsY !== 664) ? State.threeDotsY : defaultDotY;
+    const dotX = MARGIN_LEFT + chartWidth + (State.threeDotsX || 34);
     ctx.fillStyle = State.colors.foreground;
     
     // Draw Dot 1
