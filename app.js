@@ -3193,12 +3193,14 @@ function updateHeaderImages() {
     const isM15 = State.timeframeMinutes === 15;
     
     if (State.isDarkMode) {
-        if (tfOverlay) tfOverlay.classList.add('hidden');
         if (mainHeaderImg) {
+            mainHeaderImg.src = 'وضع ليلي 5 دقائق.jpg?v=74';
+        }
+        if (tfOverlay) {
             if (isM15) {
-                mainHeaderImg.src = 'وضع ليلي 15 دقيقة.jpg?v=74';
+                tfOverlay.classList.remove('hidden');
             } else {
-                mainHeaderImg.src = 'وضع ليلي 5 دقائق.jpg?v=74';
+                tfOverlay.classList.add('hidden');
             }
         }
         if (bottomNavImg) {
