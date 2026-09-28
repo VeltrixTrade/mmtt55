@@ -160,15 +160,17 @@ button, input, select, textarea {
 .mt5-header-container {
     position: relative;
     width: 100%;
-    height: auto;
+    aspect-ratio: 1166 / 165;
     background: var(--bg-page-header);
     border-bottom: none;
     flex-shrink: 0;
+    overflow: hidden;
 }
 
 .mt5-header-img {
     width: 100%;
-    height: auto;
+    height: 100%;
+    object-fit: cover;
     display: block;
 }
 
@@ -869,7 +871,7 @@ body.trade-tab-active .bottom-nav-container {
 }
 
 .trade-header-plus-btn {
-    margin-top: 2px; /* Moves left sticker down to align perfectly with right sticker */
+    margin-top: 0;
 }
 
 .trade-header-btn:active {
@@ -878,8 +880,10 @@ body.trade-tab-active .bottom-nav-container {
 }
 
 .trade-header-btn-img {
-    width: 100%;
-    height: 100%;
+    height: 32px;
+    width: auto;
+    max-width: 100%;
+    max-height: 100%;
     object-fit: contain;
     display: block;
     pointer-events: none;
